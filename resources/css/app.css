@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global styles for terms and conditions */
+.terms-content p {
+    @apply mb-4; /* Add margin bottom for paragraphs */
+}
+
+.terms-content h1 {
+    @apply text-3xl font-bold mt-10 mb-4; /* Style for <h1> */
+}
+
+.terms-content h2 {
+    @apply text-2xl font-semibold mt-6 mb-4; /* Style for <h2> */
+}
+
+.terms-content a {
+    @apply text-emerald-800 hover:underline; /* Style for links */
+}
+
+.terms-content ul {
+    @apply list-disc list-inside mb-4; /* Style for unordered lists */
+}
+
+.terms-content li {
+    @apply mb-2; /* Add margin bottom between list items */
+}
+
+.cls-1 {
+    fill: #f24738;
+}
+
+.cls-1,
+.cls-2,
+.cls-3 {
+    stroke-width: 0px;
+}
+
+.cls-2 {
+    fill: #194039;
+}
+
+.cls-3 {
+    fill: #fff;
+}
