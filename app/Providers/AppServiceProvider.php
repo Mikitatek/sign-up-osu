@@ -12,7 +12,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        if ($this->app->environment('local') || $this->app->runningInConsole()) {
+            $this->app->register(\Laravel\Pail\PailServiceProvider::class);
+        }
     }
 
     /**
