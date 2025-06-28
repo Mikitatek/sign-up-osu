@@ -82,20 +82,41 @@ export default function Footer() {
 
             {/* Subsol */}
             <div className="mt-10 border-t border-neutral-700 pt-6 flex flex-col md:flex-row justify-between items-center text-xs text-gray-400 gap-4">
-                <div className="space-x-4">
-                    <a href="/termeni-si-conditii" className="hover:underline">
+                <div className="flex flex-wrap gap-2">
+                    <button
+                        onClick={() =>
+                            (window.location.href = "/termeni-si-conditii")
+                        }
+                        className="px-3 py-1 border border-transparent hover:border-gray-300 rounded text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition"
+                    >
                         Termeni și condiții
-                    </a>
-                    <a href="/termeni-si-conditii" className="hover:underline">
+                    </button>
+                    <button
+                        onClick={() =>
+                            (window.location.href = "/termeni-si-conditii")
+                        }
+                        className="px-3 py-1 border border-transparent hover:border-gray-300 rounded text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition"
+                    >
                         Politica Cookies
-                    </a>
-                    <a href="/termeni-si-conditii" className="hover:underline">
+                    </button>
+                    <button
+                        onClick={() =>
+                            (window.location.href = "/termeni-si-conditii")
+                        }
+                        className="px-3 py-1 border border-transparent hover:border-gray-300 rounded text-gray-400 hover:text-gray-900 hover:bg-gray-100  transition"
+                    >
                         Politica de confidențialitate
-                    </a>
-                    <a href="/valori-nutritionale" className="hover:underline">
+                    </button>
+                    <button
+                        onClick={() =>
+                            (window.location.href = "/valori-nutritionale")
+                        }
+                        className="px-3 py-1 border border-transparent hover:border-gray-300 rounded text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition"
+                    >
                         Valori Nutriționale
-                    </a>
+                    </button>
                 </div>
+
                 <div className="flex gap-4">
                     <a
                         href="https://anpc.ro/ce-este-sal/"

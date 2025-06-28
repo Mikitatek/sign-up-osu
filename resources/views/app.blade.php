@@ -6,7 +6,24 @@
 
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title inertia>{{ config('app.name', 'Oșu') }}</title>
+        <title inertia>{{ "Oșu Kurtos și Langos" }}</title>
+        <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
+        <meta name="description" content="Comandă online kurtos și langosi proaspeți de la Bătrânul Osu. Livrare rapidă în Brașov și în zonă. Gust autentic.">
+
+        <meta property="og:title" content="Bătrânul Osu - Kurtos și Langosi Brașov">
+        <meta property="og:description" content="Comandă online kurtosi si langosi tradiționali. Livrare rapidă în Brașov.">
+        <meta property="og:image" content="https://www.batranul-osu.ro/img/cover-delivery.png">
+        <meta property="og:url" content="https://www.batranul-osu.ro/">
+        <meta property="og:type" content="website">
+
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="Bătrânul Osu - Kurtos și Langosi Brașov">
+        <meta name="twitter:description" content="Comandă online kurtosi si langosi tradiționali. Livrare rapidă în Brașov..">
+        <meta name="twitter:image" content="https://www.batranul-osu.ro/img/cover-delivery.png">
+
+        <link rel="canonical" href="https://www.batranul-osu.ro/">
+        <link rel="apple-touch-icon" href="{{ asset('favicon.png') }}">
+        <link rel="manifest" href="/site.webmanifest">  
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -25,6 +42,44 @@
         j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
         })(window,document,'script','dataLayer','GTM-PR9QH8QL');</script>
+
+        <script type="application/ld+json">
+        {
+        "@context": "https://schema.org",
+        "@type": "Bakery",
+        "name": "Bătrânul Osu",
+        "image": "https://www.batranul-osu.ro/images/og-image.jpg",
+        "url": "https://www.batranul-osu.ro/",
+        "telephone": "+40759673848",
+        "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "Strada Exemplu nr.1",
+            "addressLocality": "Brașov",
+            "postalCode": "500000",
+            "addressCountry": "RO"
+        },
+        "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": "45.657973",
+            "longitude": "25.601198"
+        },
+        "openingHoursSpecification": {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday"
+            ],
+            "opens": "10:00",
+            "closes": "21:00"
+        }
+        }
+        </script>
+
     <!-- End Google Tag Manager -->
     </head>
     <body class="font-sans antialiased bg-[url('/resources/assets/cover.png')] bg-cover bg-center h-screen" >

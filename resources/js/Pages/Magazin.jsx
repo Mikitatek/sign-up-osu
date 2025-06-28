@@ -10,6 +10,11 @@ export default function ShopPage() {
     const [selectedOptions, setSelectedOptions] = useState([]);
     const [cartItems, setCartItems] = useState([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
+
+    //pt animatii
+    const [isAnimatingOut, setIsAnimatingOut] = useState(false);
+    const [showCart, setShowCart] = useState(false);
+    const cartRef = useRef(null);
     const [promoCode, setPromoCode] = useState("");
     const [discount, setDiscount] = useState(0);
     const [promoStatus, setPromoStatus] = useState("");
@@ -17,6 +22,7 @@ export default function ShopPage() {
         message: "",
         success: null,
     });
+    const [dateError, setDateError] = useState("");
 
     const [formData, setFormData] = useState({
         name: "",
@@ -61,6 +67,15 @@ export default function ShopPage() {
 
     const today = new Date().toISOString().split("T")[0];
 
+    // Telefon românesc - începe cu 07 și are 10 cifre
+    const phoneRegex = /^07\d{8}$/;
+
+    // Email simplu
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    const isPhoneValid = phoneRegex.test(formData.phone);
+    const isEmailValid = emailRegex.test(formData.email);
+
     const generateTimeOptions = (startHour, endHour, stepMinutes) => {
         const options = [];
         for (let h = startHour; h <= endHour; h++) {
@@ -76,6 +91,21 @@ export default function ShopPage() {
         categoryRefs.current["Locatie"] = document.getElementById("locatie");
         categoryRefs.current["Contact"] = document.getElementById("contact");
     }, []);
+
+    useEffect(() => {
+        if (!isCartOpen) return;
+
+        function handleClickOutside(event) {
+            if (cartRef.current && !cartRef.current.contains(event.target)) {
+                closeCart();
+            }
+        }
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [isCartOpen]);
 
     useEffect(() => {
         const observer = new IntersectionObserver(
@@ -182,6 +212,19 @@ export default function ShopPage() {
         };
     }, [selectedProduct, isCartOpen]);
 
+    useEffect(() => {
+        if (selectedProduct) {
+            setIsAnimatingOut(false); // resetăm animația când se deschide
+        }
+    }, [selectedProduct]);
+
+    const handleClose = () => {
+        setIsAnimatingOut(true);
+        setTimeout(() => {
+            closeModal();
+        }, 300); // durata animatiei
+    };
+
     const categoryOrder = ["Ediție Limitată", "Langos", "Kurtos", "Băuturi"];
 
     // Grupează produsele pe categorii
@@ -242,6 +285,31 @@ export default function ShopPage() {
         return selectedProduct.price || 0;
     };
 
+    useEffect(() => {
+        const handleScroll = () => {
+            const scrollPosition = window.scrollY + 180; // + offset
+
+            let current = null;
+
+            for (const cat of categories) {
+                const el = categoryRefs.current[cat];
+                if (el) {
+                    const top = el.offsetTop;
+                    if (scrollPosition >= top) {
+                        current = cat;
+                    }
+                }
+            }
+
+            if (current !== selectedCategory) {
+                setSelectedCategory(current);
+            }
+        };
+
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, [categories, selectedCategory]);
+
     const addToCart = (product, options = []) => {
         const optionDesc = options.join(", ");
         const cartKey = `${product.id}-${optionDesc}`;
@@ -295,6 +363,16 @@ export default function ShopPage() {
         });
     };
 
+    const openCart = () => {
+        setShowCart(true);
+        setTimeout(() => setIsCartOpen(true), 10); // trigger animation
+    };
+
+    const closeCart = () => {
+        setIsCartOpen(false);
+        setTimeout(() => setShowCart(false), 300); // așteptăm animatia
+    };
+
     const updateQuantity = (cartKey, delta) => {
         setCartItems((prev) =>
             prev
@@ -317,9 +395,13 @@ export default function ShopPage() {
         0
     );
 
-    // Transport: 16 RON dacă subtotal < 60 RON
-    const transportFee = subtotal >= 8000 ? 0 : 1600;
+    // dacă e ridicare personală => transport 0
+    const isPickup = formData.deliveryType === "ridicare";
+
+    const transportFee = isPickup ? 0 : subtotal >= 8000 ? 0 : 1800;
+
     const totalBeforeDiscount = subtotal + transportFee;
+
     const total = totalBeforeDiscount * ((100 - discount) / 100);
 
     const applyPromoCode = async () => {
@@ -501,7 +583,7 @@ export default function ShopPage() {
                 () => (
                     alert("Comanda a fost trimisă !"),
                     localStorage.removeItem("osu_cart"),
-                    setIsCartOpen(false),
+                    closeCart(false),
                     window.location.reload()
                 ),
                 (error) => console.error("EmailJS error:", error)
@@ -509,11 +591,9 @@ export default function ShopPage() {
     };
 
     const handleCategoryClick = (cat) => {
-        setSelectedCategory(cat);
         const element = categoryRefs.current[cat];
-
         if (element) {
-            const offset = 170; // Adjust this based on your header height (e.g. 64–100px)
+            const offset = 170;
             const top =
                 element.getBoundingClientRect().top +
                 window.pageYOffset -
@@ -584,11 +664,26 @@ export default function ShopPage() {
             );
     };
 
+    function generateTimeOptionsDynamic(selectedDate) {
+        const now = new Date();
+        const todayDateString = now.toISOString().split("T")[0];
+
+        // dacă e azi
+        if (selectedDate === todayDateString) {
+            const nextHour = now.getHours() + 2;
+            const startHour = Math.min(Math.max(nextHour, 10), 21);
+            return generateTimeOptions(startHour, 21, 30);
+        }
+
+        // altfel default 10-21
+        return generateTimeOptions(10, 21, 30);
+    }
+
     return (
         <SiteLayout
             totalItemCount={totalItemCount}
             subtotal={subtotal}
-            setIsCartOpen={setIsCartOpen}
+            setIsCartOpen={openCart}
         >
             {/* Mobile – Categorii cu scroll orizontal și fundal verde */}
             <div className="block md:hidden overflow-x-auto whitespace-nowrap px-4 py-3 bg-emerald-800 sticky top-[100px] z-30">
@@ -664,7 +759,7 @@ export default function ShopPage() {
                             <div className="grid grid-cols-2 divide-x divide-gray-300 mt-6 px-4 md:px-0 text-center font-bold text-gray-400">
                                 <div className="flex flex-col items-center justify-center text-sm">
                                     <span className="text-lg text-black">
-                                        16.00 RON
+                                        18.00 RON
                                     </span>
                                     <span className="text-xs">livrare</span>
                                 </div>
@@ -956,19 +1051,28 @@ export default function ShopPage() {
             </section>
 
             {selectedProduct && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full relative">
+                <div
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+                    onClick={handleClose}
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        className={`bg-white p-6 rounded-lg shadow-xl max-w-md w-full relative transform transition duration-300 ease-out
+          ${isAnimatingOut ? "animate-fadeOut" : "animate-fadeIn"}`}
+                    >
                         <button
-                            onClick={closeModal}
+                            onClick={handleClose}
                             className="absolute top-2 right-2 text-gray-500 hover:text-black text-xl"
                         >
                             &times;
                         </button>
+
                         <img
                             src={selectedProduct.image}
                             alt={selectedProduct.name}
                             className="w-full h-full object-cover rounded mb-4"
                         />
+
                         <h3 className="text-2xl font-bold mb-2">
                             {selectedProduct.name}
                         </h3>
@@ -1035,7 +1139,7 @@ export default function ShopPage() {
                         <button
                             onClick={() => {
                                 addToCart(selectedProduct, selectedOptions);
-                                closeModal();
+                                handleClose();
                             }}
                             className="w-full bg-emerald-800 text-white py-2 rounded hover:bg-red-500 font-bold"
                         >
@@ -1044,424 +1148,495 @@ export default function ShopPage() {
                     </div>
                 </div>
             )}
-            {isCartOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full relative overflow-y-auto max-h-[90vh] sm:max-h-screen">
-                        <button
-                            onClick={() => setIsCartOpen(false)}
-                            className="absolute top-2 right-2 text-gray-500 hover:text-black text-3xl w-10 h-10 flex items-center justify-center"
+
+            {showCart && (
+                <div
+                    className={` fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-opacity duration-300 ${
+                        isCartOpen ? "opacity-100" : "opacity-0"
+                    }`}
+                >
+                    <div
+                        className={`bg-white rounded-lg shadow-xl transform transition-all duration-300 ${
+                            isCartOpen
+                                ? "scale-100 opacity-100"
+                                : "scale-95 opacity-0"
+                        }`}
+                    >
+                        <div
+                            className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full relative overflow-y-auto max-h-[90vh] sm:max-h-screen"
+                            ref={cartRef}
                         >
-                            ×
-                        </button>
-                        <h3 className="text-2xl font-bold mb-4">
-                            Coș de cumpărături
-                        </h3>
-                        {cartItems.length === 0 ? (
-                            <p className="text-gray-600">Coșul este gol.</p>
-                        ) : (
-                            <>
-                                {/* <pre className="text-xs text-gray-400 overflow-x-auto">
+                            <button
+                                onClick={() => closeCart()}
+                                className="absolute top-2 right-2 text-gray-500 hover:text-black text-3xl w-10 h-10 flex items-center justify-center"
+                            >
+                                ×
+                            </button>
+                            <h3 className="text-2xl font-bold mb-4">
+                                Coș de cumpărături
+                            </h3>
+                            {cartItems.length === 0 ? (
+                                <p className="text-gray-600">Coșul este gol.</p>
+                            ) : (
+                                <>
+                                    {/* <pre className="text-xs text-gray-400 overflow-x-auto">
                                     {JSON.stringify(cartItems, null, 2)}
                                 </pre> */}
-                                <ul className="mb-4">
-                                    {cartItems.map((item) => {
-                                        const fullPrice =
-                                            (item.price * item.qty) / 100;
-                                        const discountedPrice =
-                                            fullPrice *
-                                            ((100 - discount) / 100);
-                                        return (
-                                            <li
-                                                key={item.cartKey}
-                                                className="flex justify-between items-center mb-2"
-                                            >
-                                                <div>
+                                    <ul className="mb-4">
+                                        {cartItems.map((item) => {
+                                            const fullPrice =
+                                                (item.price * item.qty) / 100;
+                                            const discountedPrice =
+                                                fullPrice *
+                                                ((100 - discount) / 100);
+                                            return (
+                                                <li
+                                                    key={item.cartKey}
+                                                    className="flex justify-between items-center mb-2"
+                                                >
                                                     <div>
-                                                        {item.name}{" "}
-                                                        {item.option &&
-                                                            `(${item.option})`}
-                                                    </div>
-                                                    <div className="text-sm text-gray-600 placeholder-italic">
-                                                        {discount > 0 ? (
-                                                            <>
-                                                                <span className="line-through mr-2">
+                                                        <div>
+                                                            {item.name}{" "}
+                                                            {item.option &&
+                                                                `(${item.option})`}
+                                                        </div>
+                                                        <div className="text-sm text-gray-600 placeholder-italic">
+                                                            {discount > 0 ? (
+                                                                <>
+                                                                    <span className="line-through mr-2">
+                                                                        {fullPrice.toFixed(
+                                                                            2
+                                                                        )}{" "}
+                                                                        RON
+                                                                    </span>
+                                                                    <span className="text-green-600 font-semibold">
+                                                                        {discountedPrice.toFixed(
+                                                                            2
+                                                                        )}{" "}
+                                                                        RON
+                                                                    </span>
+                                                                </>
+                                                            ) : (
+                                                                <span>
                                                                     {fullPrice.toFixed(
                                                                         2
                                                                     )}{" "}
                                                                     RON
                                                                 </span>
-                                                                <span className="text-green-600 font-semibold">
-                                                                    {discountedPrice.toFixed(
-                                                                        2
-                                                                    )}{" "}
-                                                                    RON
-                                                                </span>
-                                                            </>
-                                                        ) : (
-                                                            <span>
-                                                                {fullPrice.toFixed(
-                                                                    2
-                                                                )}{" "}
-                                                                RON
-                                                            </span>
-                                                        )}
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <div className="flex items-center space-x-2">
-                                                    <button
-                                                        onClick={() =>
-                                                            updateQuantity(
-                                                                item.cartKey,
-                                                                -1
-                                                            )
-                                                        }
-                                                        className="px-2 py-1 bg-gray-200 rounded"
-                                                    >
-                                                        -
-                                                    </button>
-                                                    <span>{item.qty}</span>
-                                                    <button
-                                                        onClick={() =>
-                                                            updateQuantity(
-                                                                item.cartKey,
-                                                                1
-                                                            )
-                                                        }
-                                                        className="px-2 py-1 bg-gray-200 rounded"
-                                                    >
-                                                        +
-                                                    </button>
-                                                </div>
-                                            </li>
-                                        );
-                                    })}
-                                </ul>
-                                <div className="mb-4">
-                                    <label
-                                        htmlFor="promo"
-                                        className="block text-sm font-medium text-gray-700"
-                                    >
-                                        Cod promoțional:
-                                    </label>
-                                    <div className="flex flex-col sm:flex-row sm:space-x-2 mt-1 space-y-2 sm:space-y-0">
-                                        <input
-                                            type="text"
-                                            id="promo"
-                                            value={promoCode}
-                                            onChange={(e) =>
-                                                setPromoCode(e.target.value)
-                                            }
-                                            className="flex-1 border border-gray-300 rounded-md shadow-sm px-3 py-2 placeholder-italic"
-                                        />
-                                        <button
-                                            onClick={applyPromoCode}
-                                            className="w-full sm:w-auto px-4 py-2 bg-emerald-800 text-white rounded hover:bg-red-500 font-bold"
+                                                    <div className="flex items-center space-x-2">
+                                                        <button
+                                                            onClick={() =>
+                                                                updateQuantity(
+                                                                    item.cartKey,
+                                                                    -1
+                                                                )
+                                                            }
+                                                            className="px-2 py-1 bg-gray-200 rounded"
+                                                        >
+                                                            -
+                                                        </button>
+                                                        <span>{item.qty}</span>
+                                                        <button
+                                                            onClick={() =>
+                                                                updateQuantity(
+                                                                    item.cartKey,
+                                                                    1
+                                                                )
+                                                            }
+                                                            className="px-2 py-1 bg-gray-200 rounded"
+                                                        >
+                                                            +
+                                                        </button>
+                                                    </div>
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                    <div className="mb-4">
+                                        <label
+                                            htmlFor="promo"
+                                            className="block text-sm font-medium text-gray-700"
                                         >
-                                            Aplică
-                                        </button>
+                                            Cod promoțional:
+                                        </label>
+                                        <div className="flex flex-col sm:flex-row sm:space-x-2 mt-1 space-y-2 sm:space-y-0">
+                                            <input
+                                                type="text"
+                                                id="promo"
+                                                value={promoCode}
+                                                onChange={(e) =>
+                                                    setPromoCode(e.target.value)
+                                                }
+                                                className="flex-1 border border-gray-300 rounded-md shadow-sm px-3 py-2 placeholder-italic"
+                                            />
+                                            <button
+                                                onClick={applyPromoCode}
+                                                className="w-full sm:w-auto px-4 py-2 bg-emerald-800 text-white rounded hover:bg-red-500 font-bold"
+                                            >
+                                                Aplică
+                                            </button>
+                                        </div>
+                                        {promoStatus && (
+                                            <p className="text-sm mt-1 text-gray-600">
+                                                {promoStatus}
+                                            </p>
+                                        )}
                                     </div>
-                                    {promoStatus && (
-                                        <p className="text-sm mt-1 text-gray-600">
-                                            {promoStatus}
-                                        </p>
-                                    )}
-                                </div>
-                            </>
-                        )}
+                                </>
+                            )}
 
-                        <p className="text-lg font-semibold mt-4">
-                            Subtotal:{" "}
-                            {discount > 0 ? (
-                                <>
-                                    <span className="line-through mr-2">
+                            <p className="text-lg font-semibold mt-4">
+                                Subtotal:{" "}
+                                {discount > 0 ? (
+                                    <>
+                                        <span className="line-through mr-2">
+                                            {(subtotal / 100).toFixed(2)} RON
+                                        </span>
+                                        <span>
+                                            {(
+                                                (subtotal *
+                                                    ((100 - discount) / 100)) /
+                                                100
+                                            ).toFixed(2)}{" "}
+                                            RON
+                                        </span>
+                                    </>
+                                ) : (
+                                    <span>
                                         {(subtotal / 100).toFixed(2)} RON
                                     </span>
-                                    <span>
-                                        {(
-                                            (subtotal *
-                                                ((100 - discount) / 100)) /
-                                            100
-                                        ).toFixed(2)}{" "}
-                                        RON
-                                    </span>
-                                </>
-                            ) : (
-                                <span>{(subtotal / 100).toFixed(2)} RON</span>
+                                )}
+                            </p>
+
+                            <p className="text-sm text-gray-700 my-2 italic">
+                                {formData.deliveryType === "ridicare"
+                                    ? "Ridicare personală – fără cost transport"
+                                    : transportFee > 0
+                                    ? `+ Transport: ${(
+                                          transportFee / 100
+                                      ).toFixed(2)} RON (gratuit peste 80 RON)`
+                                    : "Transport gratuit (comenzi peste 80 RON)"}
+                            </p>
+
+                            <p className="text-lg font-semibold mb-4">
+                                Total:{" "}
+                                <span>{(total / 100).toFixed(2)} RON</span>
+                            </p>
+
+                            <textarea
+                                className="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 mb-4 placeholder-italic"
+                                placeholder="Mențiuni/Observații (opțional)"
+                                value={formData.notes}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        notes: e.target.value,
+                                    })
+                                }
+                            ></textarea>
+
+                            <h3 className="text-2xl font-bold my-4">
+                                Detalii de livrare
+                            </h3>
+
+                            <input
+                                required
+                                className="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 mb-2 placeholder-italic"
+                                type="text"
+                                placeholder="Nume și prenume *"
+                                value={formData.name}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        name: e.target.value,
+                                    })
+                                }
+                            />
+                            <input
+                                required
+                                className={`w-full border ${
+                                    !isPhoneValid && formData.phone
+                                        ? "border-red-500"
+                                        : "border-gray-300"
+                                } rounded-md shadow-sm px-3 py-2 mb-1 placeholder-italic`}
+                                type="tel"
+                                placeholder="Telefon *"
+                                value={formData.phone}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        phone: e.target.value,
+                                    })
+                                }
+                            />
+                            {!isPhoneValid && formData.phone && (
+                                <p className="text-red-600 text-sm mb-2">
+                                    Număr invalid. Ex.: 07XXXXXXXX
+                                </p>
                             )}
-                        </p>
 
-                        <p className="text-sm text-gray-700 my-2 italic">
-                            {transportFee > 0
-                                ? `+ Transport: ${(transportFee / 100).toFixed(
-                                      2
-                                  )} RON (gratuit peste 80 RON)`
-                                : "Transport gratuit (comenzi peste 80 RON)"}
-                        </p>
+                            <input
+                                required
+                                className={`w-full border ${
+                                    !isEmailValid && formData.email
+                                        ? "border-red-500"
+                                        : "border-gray-300"
+                                } rounded-md shadow-sm px-3 py-2 mb-1 placeholder-italic`}
+                                type="email"
+                                placeholder="Email *"
+                                value={formData.email}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        email: e.target.value,
+                                    })
+                                }
+                            />
+                            {!isEmailValid && formData.email && (
+                                <p className="text-red-600 text-sm mb-2">
+                                    Adresa de email nu este validă.
+                                </p>
+                            )}
 
-                        <p className="text-lg font-semibold mb-4">
-                            Total: <span>{(total / 100).toFixed(2)} RON</span>
-                        </p>
+                            <h5 className="text-2xl font-bold my-4">
+                                Livrare sau Ridicare
+                            </h5>
+                            <select
+                                required
+                                className="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 mb-4 placeholder-italic"
+                                value={formData.deliveryType}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        deliveryType: e.target.value,
+                                    })
+                                }
+                            >
+                                <option value="livrare">Livrare</option>
+                                <option value="ridicare">
+                                    Ridicare personală
+                                </option>
+                            </select>
 
-                        <textarea
-                            className="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 mb-4 placeholder-italic"
-                            placeholder="Mențiuni/Observații (opțional)"
-                            value={formData.notes}
-                            onChange={(e) =>
-                                setFormData({
-                                    ...formData,
-                                    notes: e.target.value,
-                                })
-                            }
-                        ></textarea>
-
-                        <h3 className="text-2xl font-bold my-4">
-                            Detalii de livrare
-                        </h3>
-
-                        <input
-                            required
-                            className="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 mb-2 placeholder-italic"
-                            type="text"
-                            placeholder="Nume și prenume *"
-                            value={formData.name}
-                            onChange={(e) =>
-                                setFormData({
-                                    ...formData,
-                                    name: e.target.value,
-                                })
-                            }
-                        />
-                        <input
-                            required
-                            className="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 mb-2 placeholder-italic"
-                            type="tel"
-                            placeholder="Telefon *"
-                            value={formData.phone}
-                            onChange={(e) =>
-                                setFormData({
-                                    ...formData,
-                                    phone: e.target.value,
-                                })
-                            }
-                        />
-                        <input
-                            required
-                            className="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 mb-2 placeholder-italic"
-                            type="email"
-                            placeholder="Email *"
-                            value={formData.email}
-                            onChange={(e) =>
-                                setFormData({
-                                    ...formData,
-                                    email: e.target.value,
-                                })
-                            }
-                        />
-
-                        <h5 className="text-2xl font-bold my-4">
-                            Livrare sau Ridicare
-                        </h5>
-                        <select
-                            required
-                            className="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 mb-4 placeholder-italic"
-                            value={formData.deliveryType}
-                            onChange={(e) =>
-                                setFormData({
-                                    ...formData,
-                                    deliveryType: e.target.value,
-                                })
-                            }
-                        >
-                            <option value="livrare">Livrare</option>
-                            <option value="ridicare">Ridicare personală</option>
-                        </select>
-
-                        {formData.deliveryType === "livrare" && (
-                            <>
-                                <input
-                                    required
-                                    className="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 mb-2 placeholder-italic"
-                                    type="text"
-                                    placeholder="Stradă *"
-                                    value={formData.street}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            street: e.target.value,
-                                        })
-                                    }
-                                />
-                                <div className="flex gap-2">
+                            {formData.deliveryType === "livrare" && (
+                                <>
                                     <input
-                                        className="w-1/2 border border-gray-300 rounded-md shadow-sm px-3 py-2 mb-2 placeholder-italic"
-                                        type="text"
-                                        placeholder="Apartament (opțional)"
-                                        value={formData.apartment}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                apartment: e.target.value,
-                                            })
-                                        }
-                                    />
-                                    <input
-                                        className="w-1/2 border border-gray-300 rounded-md shadow-sm px-3 py-2 mb-2 placeholder-italic"
-                                        type="text"
-                                        placeholder="Scară (opțional)"
-                                        value={formData.staircase}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                staircase: e.target.value,
-                                            })
-                                        }
-                                    />
-                                </div>
-                                <div className="flex gap-2">
-                                    <input
-                                        className="w-1/2 border border-gray-300 rounded-md shadow-sm px-3 py-2 mb-2 placeholder-italic"
-                                        type="text"
-                                        placeholder="Etaj (opțional)"
-                                        value={formData.floor}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                floor: e.target.value,
-                                            })
-                                        }
-                                    />
-                                    <select
                                         required
-                                        className="w-1/2 border border-gray-300 rounded-md shadow-sm px-3 py-2 mb-2 placeholder-italic"
-                                        value={formData.city}
+                                        className="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 mb-2 placeholder-italic"
+                                        type="text"
+                                        placeholder="Stradă *"
+                                        value={formData.street}
                                         onChange={(e) =>
                                             setFormData({
                                                 ...formData,
-                                                city: e.target.value,
+                                                street: e.target.value,
+                                            })
+                                        }
+                                    />
+                                    <div className="flex gap-2">
+                                        <input
+                                            className="w-1/2 border border-gray-300 rounded-md shadow-sm px-3 py-2 mb-2 placeholder-italic"
+                                            type="text"
+                                            placeholder="Apartament (opțional)"
+                                            value={formData.apartment}
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    apartment: e.target.value,
+                                                })
+                                            }
+                                        />
+                                        <input
+                                            className="w-1/2 border border-gray-300 rounded-md shadow-sm px-3 py-2 mb-2 placeholder-italic"
+                                            type="text"
+                                            placeholder="Scară (opțional)"
+                                            value={formData.staircase}
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    staircase: e.target.value,
+                                                })
+                                            }
+                                        />
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <input
+                                            className="w-1/2 border border-gray-300 rounded-md shadow-sm px-3 py-2 mb-2 placeholder-italic"
+                                            type="text"
+                                            placeholder="Etaj (opțional)"
+                                            value={formData.floor}
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    floor: e.target.value,
+                                                })
+                                            }
+                                        />
+                                        <select
+                                            required
+                                            className="w-1/2 border border-gray-300 rounded-md shadow-sm px-3 py-2 mb-2 placeholder-italic"
+                                            value={formData.city}
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    city: e.target.value,
+                                                })
+                                            }
+                                        >
+                                            <option value="">
+                                                Localitate *
+                                            </option>
+                                            {[
+                                                "Brașov",
+                                                "Hărman",
+                                                "Ghimbav",
+                                                "Cristian",
+                                                "Sânpetru",
+                                                "Stupini",
+                                            ].map((city) => (
+                                                <option key={city} value={city}>
+                                                    {city}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </>
+                            )}
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Livrare programată (opțional)
+                                </label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="date"
+                                        className={`w-1/2 border ${
+                                            dateError
+                                                ? "border-red-500"
+                                                : "border-gray-300"
+                                        } rounded-md shadow-sm px-3 py-2 placeholder-italic`}
+                                        value={formData.scheduledDate || today}
+                                        min={today}
+                                        onChange={(e) => {
+                                            const newDate = e.target.value;
+                                            if (newDate < today) {
+                                                setDateError(
+                                                    "Nu poți selecta o zi în trecut."
+                                                );
+                                            } else {
+                                                setDateError("");
+                                                setFormData({
+                                                    ...formData,
+                                                    scheduledDate: newDate,
+                                                    scheduledHour: "asap", // resetezi ora
+                                                });
+                                            }
+                                        }}
+                                    />
+
+                                    <select
+                                        className="w-1/2 border border-gray-300 rounded-md shadow-sm px-3 py-2 placeholder-italic"
+                                        value={formData.scheduledHour || "asap"}
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                scheduledHour: e.target.value,
                                             })
                                         }
                                     >
-                                        <option value="">Localitate *</option>
-                                        {[
-                                            "Brașov",
-                                            "Hărman",
-                                            "Ghimbav",
-                                            "Cristian",
-                                            "Sânpetru",
-                                            "Stupini",
-                                        ].map((city) => (
-                                            <option key={city} value={city}>
-                                                {city}
+                                        <option value="asap">
+                                            Cât mai curând
+                                        </option>
+                                        {generateTimeOptionsDynamic(
+                                            formData.scheduledDate || today
+                                        ).map((hour) => (
+                                            <option key={hour} value={hour}>
+                                                {hour}
                                             </option>
                                         ))}
                                     </select>
                                 </div>
-                            </>
-                        )}
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Livrare programată (opțional)
-                            </label>
-                            <div className="flex gap-2">
-                                {/* Data (fixată pe azi) */}
-                                <input
-                                    type="date"
-                                    className="w-1/2 border border-gray-300 rounded-md shadow-sm px-3 py-2 placeholder-italic"
-                                    value={formData.scheduledDate || today}
-                                    min={today}
-                                    max={today}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            scheduledDate: e.target.value,
-                                        })
-                                    }
-                                />
-
-                                {/* Ora (dropdown) */}
-                                <select
-                                    className="w-1/2 border border-gray-300 rounded-md shadow-sm px-3 py-2 placeholder-italic"
-                                    value={formData.scheduledHour || "asap"}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            scheduledHour: e.target.value,
-                                        })
-                                    }
-                                >
-                                    <option value="asap">Cât mai curând</option>
-                                    {generateTimeOptions(10, 21, 30).map(
-                                        (hour) => (
-                                            <option key={hour} value={hour}>
-                                                {hour}
-                                            </option>
-                                        )
-                                    )}
-                                </select>
+                                {dateError && (
+                                    <p className="text-red-600 text-sm mt-1">
+                                        {dateError}
+                                    </p>
+                                )}
                             </div>
+
+                            <h5 className="text-2xl font-bold my-4">
+                                Metoda de plată
+                            </h5>
+                            <select
+                                required
+                                className="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 mb-4 placeholder-italic"
+                                value={formData.paymentMethod}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        paymentMethod: e.target.value,
+                                    })
+                                }
+                            >
+                                <option value="card">Plata cu cardul</option>
+                                <option value="cash">
+                                    Plata cash la livrare
+                                </option>
+                            </select>
+
+                            {formErrors.general && (
+                                <p className="text-red-600 text-sm mb-2">
+                                    {formErrors.general}
+                                </p>
+                            )}
+
+                            <div
+                                className="mb-4"
+                                style={{
+                                    transform: "scale(0.85)",
+                                    transformOrigin: "0 0",
+                                }}
+                            >
+                                <ReCAPTCHA
+                                    //live
+                                    sitekey="6LeqX14rAAAAAI4xzmtc7bylyMAbvVwDPJvSBi2l"
+                                    //test
+                                    // sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+                                    onChange={() => setCaptchaVerified(true)}
+                                />
+                            </div>
+
+                            {!isWorkingHours && (
+                                <p className="text-red-600 font-semibold text-center mb-2">
+                                    {workingMessage}
+                                </p>
+                            )}
+
+                            {cartItems.length === 0 && (
+                                <p className="text-red-600 text-sm font-semibold mb-2">
+                                    Coșul este gol. Adaugă produse pentru a
+                                    putea plasa comanda.
+                                </p>
+                            )}
+
+                            <button
+                                onClick={handleCheckout}
+                                disabled={
+                                    !isWorkingHours ||
+                                    cartItems.length === 0 ||
+                                    !isPhoneValid ||
+                                    !isEmailValid
+                                }
+                                className={`w-full mt-4 py-2 rounded font-bold transition ${
+                                    !isWorkingHours || cartItems.length === 0
+                                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                        : "bg-emerald-800 text-white hover:bg-red-500"
+                                }`}
+                            >
+                                Trimite comanda
+                            </button>
                         </div>
-
-                        <h5 className="text-2xl font-bold my-4">
-                            Metoda de plată
-                        </h5>
-                        <select
-                            required
-                            className="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 mb-4 placeholder-italic"
-                            value={formData.paymentMethod}
-                            onChange={(e) =>
-                                setFormData({
-                                    ...formData,
-                                    paymentMethod: e.target.value,
-                                })
-                            }
-                        >
-                            <option value="card">Plata cu cardul</option>
-                            <option value="cash">Plata cash la livrare</option>
-                        </select>
-
-                        {formErrors.general && (
-                            <p className="text-red-600 text-sm mb-2">
-                                {formErrors.general}
-                            </p>
-                        )}
-
-                        <div
-                            className="mb-4"
-                            style={{
-                                transform: "scale(0.85)",
-                                transformOrigin: "0 0",
-                            }}
-                        >
-                            <ReCAPTCHA
-                                sitekey="6LeqX14rAAAAAI4xzmtc7bylyMAbvVwDPJvSBi2l"
-                                onChange={() => setCaptchaVerified(true)}
-                            />
-                        </div>
-
-                        {!isWorkingHours && (
-                            <p className="text-red-600 font-semibold text-center mb-2">
-                                {workingMessage}
-                            </p>
-                        )}
-
-                        {cartItems.length === 0 && (
-                            <p className="text-red-600 text-sm font-semibold mb-2">
-                                Coșul este gol. Adaugă produse pentru a putea
-                                plasa comanda.
-                            </p>
-                        )}
-
-                        <button
-                            onClick={handleCheckout}
-                            disabled={!isWorkingHours || cartItems.length === 0}
-                            className={`w-full mt-4 py-2 rounded font-bold transition ${
-                                !isWorkingHours || cartItems.length === 0
-                                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                    : "bg-emerald-800 text-white hover:bg-red-500"
-                            }`}
-                        >
-                            Trimite comanda
-                        </button>
                     </div>
                 </div>
             )}

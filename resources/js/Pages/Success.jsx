@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import emailjs from "@emailjs/browser";
+import SiteLayout from "@/Layouts/SiteLayout";
 
 export default function Success() {
     const [loading, setLoading] = useState(true);
