@@ -3,11 +3,7 @@ import SiteLayout from "@/Layouts/SiteLayout";
 
 export default function Cancel() {
     return (
-        <SiteLayout
-            totalItemCount={totalItemCount}
-            subtotal={subtotal}
-            setIsCartOpen={setIsCartOpen}
-        >
+        <SiteLayout>
             <div className="bg-yellow-50 min-h-screen flex items-center justify-center">
                 <div className="bg-white p-8 rounded-lg shadow-md text-center">
                     <h1 className="text-2xl font-bold text-yellow-700 mb-4">

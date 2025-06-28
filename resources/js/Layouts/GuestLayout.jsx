@@ -1,17 +1,19 @@
-import ApplicationLogo from "@/Components/ApplicationLogo";
+import logo from "../../assets/osu-logo-site.svg";
+import React from "react";
 import { Link } from "@inertiajs/react";
-import Navbar from "../Components/Navbar";
-import Footer from "../Components/Footer";
 
-export default function GuestLayout({ children }) {
+export default function Guest({ children }) {
     return (
-        <>
-            <div className="min-h-screen  font-sans text-gray-800 shadow-md">
-                <div className="w-full max-w-6xl mx-auto bg-white">
-                    <Navbar />
-                    {children} <Footer />
-                </div>
+        <div className="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
+            <div>
+                <Link href="/">
+                    <img src={logo} alt="Osu Logo" className="w-32" />
+                </Link>
             </div>
-        </>
+
+            <div className="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
+                {children}
+            </div>
+        </div>
     );
 }

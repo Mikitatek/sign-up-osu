@@ -212,14 +212,6 @@ Route::get('/api/stripe/success', function (Request $request) {
 Route::get('/success', fn() => Inertia::render('Success'));
 Route::get('/cancel', fn() => Inertia::render('Cancel'));
 
-// Route::get('/welcome', function () {
-//     return Inertia::render('Welcome', [
-//         'canLogin' => Route::has('login'),
-//         'canRegister' => Route::has('register'),
-//         'laravelVersion' => Application::VERSION,
-//         'phpVersion' => PHP_VERSION,
-//     ]);
-// });
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');

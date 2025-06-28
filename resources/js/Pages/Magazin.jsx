@@ -10,6 +10,7 @@ export default function ShopPage() {
     const [selectedOptions, setSelectedOptions] = useState([]);
     const [cartItems, setCartItems] = useState([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
+    const [orderSuccessMessage, setOrderSuccessMessage] = useState("");
 
     //pt animatii
     const [isAnimatingOut, setIsAnimatingOut] = useState(false);
@@ -535,6 +536,7 @@ export default function ShopPage() {
 
     const sendOrderEmail = () => {
         const emailData = {
+            // toate datele tale rămân aici
             name: formData.name,
             phone: formData.phone,
             email: formData.email,
@@ -579,15 +581,17 @@ export default function ShopPage() {
                 emailData,
                 "xweu0E67NPFqknP_c"
             )
-            .then(
-                () => (
-                    alert("Comanda a fost trimisă !"),
-                    localStorage.removeItem("osu_cart"),
-                    closeCart(false),
-                    window.location.reload()
-                ),
-                (error) => console.error("EmailJS error:", error)
-            );
+            .then(() => {
+                setOrderSuccessMessage("✅ Comanda a fost trimisă cu succes!");
+                localStorage.removeItem("osu_cart");
+                closeCart(false);
+
+                setTimeout(() => {
+                    setOrderSuccessMessage("");
+                    window.location.reload();
+                }, 4000); // mesajul dispare după 4 secunde
+            })
+            .catch((error) => console.error("EmailJS error:", error));
     };
 
     const handleCategoryClick = (cat) => {
@@ -1145,6 +1149,14 @@ export default function ShopPage() {
                         >
                             Adaugă în coș
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {orderSuccessMessage && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                    <div className="bg-white text-emerald-800 text-xl font-bold px-6 py-4 rounded-lg shadow-xl text-center max-w-md w-full">
+                        {orderSuccessMessage}
                     </div>
                 </div>
             )}
