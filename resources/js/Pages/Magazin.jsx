@@ -399,11 +399,10 @@ export default function ShopPage() {
     // dacă e ridicare personală => transport 0
     const isPickup = formData.deliveryType === "ridicare";
 
-    const transportFee = isPickup ? 0 : subtotal >= 8000 ? 0 : 1800;
+    const discountedSubtotal = subtotal * ((100 - discount) / 100);
+    const transportFee = isPickup ? 0 : discountedSubtotal >= 8000 ? 0 : 1800;
 
-    const totalBeforeDiscount = subtotal + transportFee;
-
-    const total = totalBeforeDiscount * ((100 - discount) / 100);
+    const total = discountedSubtotal + transportFee;
 
     const applyPromoCode = async () => {
         try {

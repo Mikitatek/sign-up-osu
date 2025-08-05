@@ -94,13 +94,22 @@ Route::post('/create-checkout-session', function (Request $request) {
         Stripe::setApiKey(config('services.stripe.secret'));
 
         $items = $request->input('items', []);
-        $promoCodeInput = trim($request->input('promoCode'));
+        $discount = floatval($request->input('discount', 0));
 
-        $lineItems = array_map(function ($item) {
+        // Construim produsele pentru Stripe
+        $lineItems = array_map(function ($item) use ($discount) {
+            $name = strtolower(trim($item['name'] ?? ''));
+            $isTransport = str_contains($name, 'transport');
+
+            $unitAmount = $item['price'];
+            $discountedAmount = $isTransport
+                ? $unitAmount // fără discount
+                : round($unitAmount * ((100 - $discount) / 100)); // cu discount
+
             return [
                 'price_data' => [
                     'currency' => 'ron',
-                    'unit_amount' => $item['price'], // venit din frontend Ã®n bani
+                    'unit_amount' => $discountedAmount,
                     'product_data' => [
                         'name' => $item['name'] ?? 'Produs',
                         'description' => $item['option'] ?? '',
@@ -113,9 +122,7 @@ Route::post('/create-checkout-session', function (Request $request) {
             ];
         }, $items);
 
-
-
-
+        // Parametrii pentru sesiunea Stripe (fără promo code)
         $params = [
             'payment_method_types' => ['card'],
             'line_items' => $lineItems,
@@ -124,26 +131,17 @@ Route::post('/create-checkout-session', function (Request $request) {
             'cancel_url' => url('/cancel'),
         ];
 
-        if (!empty($promoCodeInput)) {
-            $promoCodes = PromotionCode::all(['active' => true]);
-            $promo = collect($promoCodes->data)->first(fn($p) => strtolower($p->code) === strtolower($promoCodeInput));
-
-            if ($promo) {
-                $params['discounts'] = [[
-                    'promotion_code' => $promo->id,
-                ]];
-            }
-        }
-
+        // Salvăm în sesiune comanda
         session([
             'order_data' => [
                 'formData' => $request->input('orderData'),
-                'items' => $request->input('items'),
-                'discount' => $request->input('discount'),
+                'items' => $items,
+                'discount' => $discount,
                 'total' => $request->input('total'),
             ]
         ]);
 
+        // Cream sesiunea de plată
         $session = Session::create($params);
 
         return response()->json(['id' => $session->id]);
