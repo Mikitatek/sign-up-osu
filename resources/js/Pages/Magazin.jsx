@@ -226,7 +226,13 @@ export default function ShopPage() {
         }, 300); // durata animatiei
     };
 
-    const categoryOrder = ["Ediție Limitată", "Langos", "Kurtos", "Băuturi"];
+    const categoryOrder = [
+        "Ediție Limitată",
+        "Langos",
+        "Kurtos Umplut",
+        "Kurtos",
+        "Băuturi",
+    ];
 
     // Grupează produsele pe categorii
     const grouped = products.reduce((acc, product) => {
@@ -808,11 +814,11 @@ export default function ShopPage() {
                                         />
                                         <div className="text-left">
                                             <p className="text-sm font-bold text-gray-800">
-                                                30% reducere
+                                                20% reducere
                                             </p>
                                             <p className="text-sm text-gray-700">
                                                 folosind codul promo <br />
-                                                SUMMER30
+                                                AUT20
                                             </p>
                                         </div>
                                     </div>
