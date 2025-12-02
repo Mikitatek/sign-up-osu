@@ -101,18 +101,6 @@ export default function EditieLimitata() {
 
     const form = useRef();
 
-    // ----- Working hours (mirrors shop) -----
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    const isAfterOpening =
-        currentHour > 10 || (currentHour === 10 && currentMinute >= 0);
-    const isBeforeClosing =
-        currentHour < 21 || (currentHour === 21 && currentMinute <= 30);
-    const isWorkingHours = isAfterOpening && isBeforeClosing;
-    // Ignore schedule in UI message for this page:
-    const workingMessage = true;
-
     // --- Date limits: only 2+ days ahead, until 24 Dec of current year ---
     const today = new Date();
 
@@ -820,8 +808,6 @@ export default function EditieLimitata() {
                 promoStatus={promoStatus}
                 discount={discount}
                 subtotal={subtotal}
-                isWorkingHours={isWorkingHours}
-                workingMessage={workingMessage}
                 total={total}
                 transportFee={transportFee}
                 formData={formData}
@@ -856,8 +842,6 @@ function CartModal({
     promoStatus,
     discount,
     subtotal,
-    isWorkingHours,
-    workingMessage,
     total,
     transportFee,
     formData,
@@ -1275,11 +1259,6 @@ function CartModal({
                                 onChange={() => setCaptchaVerified(true)}
                             />
                         </div>
-                        {!isWorkingHours && (
-                            <p className="text-red-600 font-semibold text-center mb-2">
-                                {workingMessage}
-                            </p>
-                        )}
                         {cartItems.length === 0 && (
                             <p className="text-red-600 text-sm font-semibold mb-2">
                                 Coșul este gol. Adaugă produse pentru a putea
@@ -1289,13 +1268,12 @@ function CartModal({
                         <button
                             onClick={handleCheckout}
                             disabled={
-                                !isWorkingHours ||
                                 cartItems.length === 0 ||
                                 !isPhoneValid ||
                                 !isEmailValid
                             }
                             className={`w-full mt-4 py-2 rounded font-bold transition ${
-                                !isWorkingHours || cartItems.length === 0
+                                cartItems.length === 0
                                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                                     : "bg-emerald-800 text-white hover:bg-red-500"
                             }`}
