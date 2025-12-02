@@ -60,9 +60,9 @@
         "telephone": "+40759673848",
         "address": {
             "@type": "PostalAddress",
-            "streetAddress": "Strada Exemplu nr.1",
+            "streetAddress": "Strada Egretei nr.1",
             "addressLocality": "Brașov",
-            "postalCode": "500000",
+            "postalCode": "500461",
             "addressCountry": "RO"
         },
         "geo": {
@@ -82,7 +82,7 @@
             "Sunday"
             ],
             "opens": "10:00",
-            "closes": "21:00"
+            "closes": "23:59"
         }
         }
         </script>

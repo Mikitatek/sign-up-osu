@@ -8,7 +8,9 @@ export default function Navbar({ totalItemCount, subtotal, setIsCartOpen }) {
 
     const { url } = usePage();
 
-    const isMagazin = url.startsWith("/magazin");
+    // ✅ Show cart on these routes:
+    const CART_ROUTES = ["/magazin", "/editie-speciala"];
+    const isCartRoute = CART_ROUTES.some((prefix) => url.startsWith(prefix));
 
     const handleScrollToSection = (id) => {
         const section = document.getElementById(id);
@@ -31,12 +33,15 @@ export default function Navbar({ totalItemCount, subtotal, setIsCartOpen }) {
                     <div className="md:col-span-2"></div>
 
                     {/* Logo */}
+
                     <div className="flex-1 flex justify-center md:justify-start md:col-span-5 py-2">
-                        <img src={logo} alt="Osu Logo" className="w-32" />
+                        <a href="/">
+                            <img src={logo} alt="Osu Logo" className="w-32" />
+                        </a>
                     </div>
 
                     {/* Cart button desktop */}
-                    {isMagazin && (
+                    {isCartRoute && (
                         <button
                             onClick={() => setIsCartOpen(true)}
                             className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 font-bold hidden md:block md:col-span-1"
@@ -46,7 +51,7 @@ export default function Navbar({ totalItemCount, subtotal, setIsCartOpen }) {
                     )}
 
                     {/* Cart button mobile */}
-                    {isMagazin && (
+                    {isCartRoute && (
                         <button
                             onClick={() => setIsCartOpen(true)}
                             className="fixed bottom-6 right-6 z-40 bg-red-500 text-white px-5 py-3 rounded-full shadow-lg hover:bg-red-700 font-bold text-lg flex items-center gap-2 md:hidden"
@@ -58,7 +63,7 @@ export default function Navbar({ totalItemCount, subtotal, setIsCartOpen }) {
                         </button>
                     )}
 
-                    {isMagazin && (
+                    {isCartRoute && (
                         <div className="absolute right-1 top-3 md:hidden z-50">
                             <button
                                 onClick={() => setIsMenuOpen((prev) => !prev)}

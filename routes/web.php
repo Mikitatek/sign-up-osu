@@ -18,6 +18,8 @@ use Stripe\Stripe;
 use Stripe\Checkout\Session;
 use Stripe\PromotionCode;
 
+use App\Models\ProductVisibility;
+
 
 Route::get('/newsletter', [NewsletterController::class, 'showForm'])->name('home');
 
@@ -27,6 +29,8 @@ Route::get('/termeni-si-conditii', [TermsController::class, 'show'])->name('term
 
 //MAGAZIN PART
 Route::get('/magazin', [MagazinController::class, 'showMagazin'])->name('magazin');
+
+Route::get('/editie-speciala', [MagazinController::class, 'showEditieLimitata'])->name('editie-speciala');
 
 Route::get('/valori-nutritionale', [MagazinController::class, 'showValoriNutritionale'])->name('valori-nutritionale');
 
@@ -80,6 +84,14 @@ Route::get('/stripe-products', function () {
                 'metadata' => $product->metadata->toArray(),
             ];
         });
+
+        $vis = ProductVisibility::pluck('is_active', 'stripe_product_id');
+
+        // Append is_active and filter
+        $result = $result->map(function ($item) use ($vis) {
+            $item['is_active'] = $vis[$item['id']] ?? true;
+            return $item;
+        })->filter(fn($p) => $p['is_active'])->values();
 
         return response()->json($result);
     } catch (Exception $e) {
@@ -227,6 +239,14 @@ Route::middleware('auth')->group(function () {
     //Terms and conditions
     Route::get('/dashboard/terms-editor', [TermsController::class, 'edit'])->name('dashboard.terms.editor');
     Route::post('/dashboard/terms-editor', [TermsController::class, 'update'])->name('dashboard.terms.update');
+
+    // Admin products page
+    Route::get('/dashboard/products', [MagazinController::class, 'dashboardProducts'])
+        ->name('dashboard.products');
+
+    // Toggle visibility (AJAX)
+    Route::post('/dashboard/products/toggle', [MagazinController::class, 'toggleProduct'])
+        ->name('dashboard.products.toggle');
 });
 
 require __DIR__ . '/auth.php';

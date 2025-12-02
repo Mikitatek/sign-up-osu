@@ -77,6 +77,85 @@ export default function ShopPage() {
     const isPhoneValid = phoneRegex.test(formData.phone);
     const isEmailValid = emailRegex.test(formData.email);
 
+    const slides = [
+        {
+            id: 1,
+            variant: "cozonaci",
+            img: "/img/cozonaci.jpeg",
+            title: "Cozonac Artizanal de Crăciun",
+            subtitle:
+                "Disponibil doar în sezon • Făcut în casă și cu umplutură generoasă",
+            link: "/editie-speciala",
+            ctaHref: "/editie-speciala", // where the CTA should go
+            ctaLabel: "Vezi mai multe!",
+        },
+        {
+            id: 2,
+            variant: "default",
+            img: "/img/cover-delivery.png",
+            title: "Oșu Kurtos și Langos",
+            subtitle: (
+                <>
+                    Program Locație: L-D: 10:00 - 24:00 <br />
+                    Program Livrări: 10:00 - 21:30
+                    <br /> Str. Egretei 1, Brașov
+                </>
+            ),
+            link: "#maijos",
+            ctaHref: "#maijos", // where the CTA should go
+            ctaLabel: "Comandă acum!",
+        },
+    ];
+
+    const [current, setCurrent] = useState(0);
+
+    // Auto-advance; when at the last slide, reset to 0 (loop),
+    // but arrows still hide contextually at the ends.
+    useEffect(() => {
+        const t = setInterval(() => {
+            setCurrent((p) => (p === slides.length - 1 ? 0 : p + 1));
+        }, 5000);
+        return () => clearInterval(t);
+    }, [slides.length]);
+
+    const hasPrev = current > 0;
+    const hasNext = current < slides.length - 1;
+
+    const prev = () => setCurrent((p) => Math.max(0, p - 1));
+    const next = () => setCurrent((p) => Math.min(slides.length - 1, p + 1));
+
+    const [touchStartX, setTouchStartX] = useState(null);
+    const [touchEndX, setTouchEndX] = useState(null);
+
+    const handleTouchStart = (e) => {
+        setTouchStartX(e.touches[0].clientX);
+        setTouchEndX(null);
+    };
+
+    const handleTouchMove = (e) => {
+        setTouchEndX(e.touches[0].clientX);
+    };
+
+    const handleTouchEnd = () => {
+        if (touchStartX === null || touchEndX === null) return;
+
+        const diff = touchStartX - touchEndX;
+        const threshold = 50; // px – how much the user has to swipe
+
+        if (Math.abs(diff) > threshold) {
+            if (diff > 0 && current < slides.length - 1) {
+                // swipe left -> next
+                next();
+            } else if (diff < 0 && current > 0) {
+                // swipe right -> prev
+                prev();
+            }
+        }
+
+        setTouchStartX(null);
+        setTouchEndX(null);
+    };
+
     const generateTimeOptions = (startHour, endHour, stepMinutes) => {
         const options = [];
         for (let h = startHour; h <= endHour; h++) {
@@ -711,6 +790,197 @@ export default function ShopPage() {
                 ))}
             </div>
             <main className="max-w-6xl mx-auto py-10 md:px-6 pt-[120px] md:pt-[130px]">
+                <div className="max-w-6xl mx-auto px-4 md:px-0 md:pb-10">
+                    {/* Rounded container only */}
+                    <div
+                        className="relative overflow-hidden rounded-2xl group w-full select-none touch-pan-y"
+                        onTouchStart={handleTouchStart}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
+                    >
+                        {/* Track */}
+                        <div
+                            className="flex transition-transform duration-700 ease-in-out"
+                            style={{
+                                transform: `translateX(-${current * 100}%)`,
+                            }}
+                        >
+                            {slides.map((s) => {
+                                const hasCTA = Boolean(s.ctaHref || s.ctaLabel);
+
+                                const handleCTA = (e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+
+                                    if (s.ctaHref?.startsWith("#")) {
+                                        // smooth scroll to section
+                                        const target = document.querySelector(
+                                            s.ctaHref
+                                        );
+                                        if (target) {
+                                            const offset = 100; // adjust if you have a fixed navbar
+                                            const top =
+                                                target.getBoundingClientRect()
+                                                    .top +
+                                                window.scrollY -
+                                                offset;
+                                            window.scrollTo({
+                                                top,
+                                                behavior: "smooth",
+                                            });
+                                        }
+                                    } else if (s.ctaHref) {
+                                        // normal navigation
+                                        window.location.href = s.ctaHref;
+                                    }
+                                };
+
+                                return (
+                                    <a
+                                        key={s.id}
+                                        href={s.link}
+                                        className="min-w-full basis-full shrink-0 block relative"
+                                    >
+                                        <div className="relative w-full h-[58vw] sm:h-[48vw] md:h-[420px] lg:h-[480px]">
+                                            <img
+                                                src={s.img}
+                                                alt={s.title}
+                                                className="absolute inset-0 w-full h-full object-cover"
+                                            />
+                                            <div className="absolute inset-0 bg-black/30" />
+
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white px-3 sm:px-4">
+                                                {s.variant === "cozonaci" ? (
+                                                    <>
+                                                        <span className="inline-block bg-red-600/90 text-white text-xs sm:text-sm font-bold px-3 py-1 rounded-full mb-3">
+                                                            EDIȚIE LIMITATĂ
+                                                        </span>
+                                                        <h1 className="text-lg sm:text-2xl md:text-4xl font-bold mb-2 drop-shadow">
+                                                            {s.title}
+                                                        </h1>
+                                                        <p className="text-xs sm:text-sm md:text-base opacity-95">
+                                                            {s.subtitle}
+                                                        </p>
+                                                        {hasCTA && (
+                                                            <button
+                                                                onClick={
+                                                                    handleCTA
+                                                                }
+                                                                className="mt-8 px-5 py-2 rounded-md font-bold bg-emerald-800 hover:bg-red-500 transition hidden md:block"
+                                                            >
+                                                                {s.ctaLabel ||
+                                                                    "Află mai mult"}
+                                                            </button>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <h1 className="text-lg sm:text-xl md:text-4xl font-bold mb-1 sm:mb-2 drop-shadow">
+                                                            {s.title}
+                                                        </h1>
+                                                        <h2 className="text-xs sm:text-sm md:text-base opacity-95 leading-snug">
+                                                            {s.subtitle}
+                                                        </h2>
+                                                        {hasCTA && (
+                                                            <button
+                                                                onClick={
+                                                                    handleCTA
+                                                                }
+                                                                className="mt-8 px-4 py-2 rounded-md font-semibold bg-red-600 hover:bg-red-700 transition hidden md:block"
+                                                            >
+                                                                {s.ctaLabel}
+                                                            </button>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </a>
+                                );
+                            })}
+                        </div>
+
+                        {/* Subtle, contextual arrows (outside links) */}
+                        {hasPrev && (
+                            <button
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    prev();
+                                }}
+                                aria-label="Previous slide"
+                                className="absolute left-2 sm:left-3 md:left-5 top-1/2 -translate-y-1/2 z-20
+                       text-white/70 hover:text-white
+                       bg-white/10 hover:bg-white/20
+                       opacity-60 group-hover:opacity-100
+                       p-2 rounded-full backdrop-blur-sm transition hidden md:block"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    className="w-5 h-5 md:w-6 md:h-6"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M15.75 19.5 8.25 12l7.5-7.5"
+                                    />
+                                </svg>
+                            </button>
+                        )}
+
+                        {hasNext && (
+                            <button
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    next();
+                                }}
+                                aria-label="Next slide"
+                                className="absolute right-2 sm:right-3 md:right-5 top-1/2 -translate-y-1/2 z-20
+                       text-white/70 hover:text-white
+                       bg-white/10 hover:bg-white/20
+                       opacity-60 group-hover:opacity-100
+                       p-2 rounded-full backdrop-blur-sm transition hidden md:block"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    className="w-5 h-5 md:w-6 md:h-6"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="m8.25 4.5 7.5 7.5-7.5 7.5"
+                                    />
+                                </svg>
+                            </button>
+                        )}
+
+                        {/* Dots */}
+                        <div className="absolute bottom-2 sm:bottom-3 left-0 right-0 flex justify-center gap-2 z-20">
+                            {slides.map((_, i) => (
+                                <button
+                                    key={i}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        setCurrent(i);
+                                    }}
+                                    aria-label={`Go to slide ${i + 1}`}
+                                    className={`h-2.5 rounded-full transition-all ${
+                                        current === i
+                                            ? "w-6 bg-white"
+                                            : "w-2.5 bg-white/50 hover:bg-white/70"
+                                    }`}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                     {/* Categories (left column) */}
                     <div className="md:col-span-1 hidden md:block">
@@ -742,91 +1012,72 @@ export default function ShopPage() {
                             </button>
                         </div>
                     </div>
-
                     <div className="md:col-span-3 space-y-10">
-                        {/* Top banner with image, info and scrollable cards */}
-                        <div className="max-w-6xl mx-auto px-4 md:px-0 ">
-                            <div className="relative rounded-2xl overflow-hidden">
-                                <img
-                                    src="/img/cover-delivery.png" // <- Înlocuiește cu imaginea ta
-                                    alt="Header"
-                                    className="w-full h-43 md:h-70 object-cover brightness-75"
-                                />
-                                <div className="absolute inset-0 bg-black bg-opacity-20 flex flex-col justify-center items-center text-white text-center px-4">
-                                    <h1 className="text-xl md:text-4xl font-bold mb-2">
-                                        Oșu Kurtos și Langos
-                                    </h1>
-                                    <h2 className="text-sm md:text-md mb-2">
-                                        L-D: 10:00 - 21:30
-                                        <br></br>
-                                        Str. Egretei 1, Brașov
-                                    </h2>
-                                </div>
+                        {/* Delivery info */}
+                        <div className="grid grid-cols-2 divide-x divide-gray-300 mt-6 text-center font-bold text-gray-400 px-4 md:px-0">
+                            <div className="flex flex-col items-center justify-center text-sm">
+                                <span className="text-lg text-black">
+                                    18.00 RON
+                                </span>
+                                <span className="text-xs">livrare</span>
                             </div>
-
-                            {/* Delivery info */}
-                            <div className="grid grid-cols-2 divide-x divide-gray-300 mt-6 px-4 md:px-0 text-center font-bold text-gray-400">
-                                <div className="flex flex-col items-center justify-center text-sm">
-                                    <span className="text-lg text-black">
-                                        18.00 RON
-                                    </span>
-                                    <span className="text-xs">livrare</span>
-                                </div>
-                                <div className="flex flex-col items-center justify-center text-sm">
-                                    <span className="text-lg text-black">
-                                        45–55
-                                    </span>
-                                    <span className="text-xs">min</span>
-                                </div>
+                            <div className="flex flex-col items-center justify-center text-sm">
+                                <span className="text-lg text-black">
+                                    45–55
+                                </span>
+                                <span className="text-xs">min</span>
                             </div>
-                            <div>
-                                <h1 className="text-sm md:text-md text-center mt-6">
-                                    Livrare în: Brașov, Ghimbav, Cristian,
-                                    Sânpetru, Stupini și Hărman
-                                </h1>
-                            </div>
-                            {/* Scrollable promo cards */}
-                            <div className="mt-6 overflow-x-auto scrollbar-hide">
-                                <div className="flex space-x-2 md:space-x-4 md:px-0">
-                                    {/* Card 1: Livrare gratuită */}
-                                    <div className="flex items-center bg-gray-100 rounded-2xl p-4 md:min-w-[310px] min-w-[260px] relative pl-24">
-                                        <img
-                                            src="/img/deliver.png" // <- înlocuiește cu calea reală
-                                            alt="Delivery"
-                                            className=" h-20 object-contain absolute left-0 bottom-0"
-                                        />
-                                        <div className="text-left">
-                                            <p className="text-sm font-bold text-gray-800">
-                                                RON 0.00 livrare
-                                            </p>
-                                            <p className="text-sm text-gray-700">
-                                                la comenzile de peste 80 de lei
-                                            </p>
-                                        </div>
+                        </div>
+                        <div>
+                            <h1 className="text-sm md:text-md text-center mt-6 px-4 md:px-0">
+                                Livrare în: Brașov, Ghimbav, Cristian, Sânpetru,
+                                Stupini și Hărman
+                            </h1>
+                        </div>
+                        {/* Scrollable promo cards */}
+                        <div className="mt-6 overflow-x-auto scrollbar-hide px-4 md:px-0">
+                            <div className="flex space-x-2 md:space-x-4 md:px-0">
+                                {/* Card 1: Livrare gratuită */}
+                                <div className="flex items-center bg-gray-100 rounded-2xl p-4 md:min-w-[310px] min-w-[260px] relative pl-24">
+                                    <img
+                                        src="/img/deliver.png" // <- înlocuiește cu calea reală
+                                        alt="Delivery"
+                                        className=" h-20 object-contain absolute left-0 bottom-0"
+                                    />
+                                    <div className="text-left">
+                                        <p className="text-sm font-bold text-gray-800">
+                                            RON 0.00 livrare
+                                        </p>
+                                        <p className="text-sm text-gray-700">
+                                            la comenzile de peste 80 de lei
+                                        </p>
                                     </div>
+                                </div>
 
-                                    {/* Card 2: Reducere cu cod */}
-                                    <div className="flex items-center bg-gray-100 rounded-2xl p-4 md:min-w-[310px] min-w-[260px] relative pl-24">
-                                        <img
-                                            src="/img/sun.png" // <- înlocuiește cu calea reală
-                                            alt="Discount"
-                                            className=" h-20 object-contain absolute left-0 bottom-0"
-                                        />
-                                        <div className="text-left">
-                                            <p className="text-sm font-bold text-gray-800">
-                                                20% reducere
-                                            </p>
-                                            <p className="text-sm text-gray-700">
-                                                folosind codul promo <br />
-                                                AUT20
-                                            </p>
-                                        </div>
+                                {/* Card 2: Reducere cu cod */}
+                                <div className="flex items-center bg-gray-100 rounded-2xl p-4 md:min-w-[310px] min-w-[260px] relative pl-24">
+                                    <img
+                                        src="/img/leaf.png" // <- înlocuiește cu calea reală
+                                        alt="Discount"
+                                        className=" h-20 object-contain absolute left-0 bottom-0"
+                                    />
+                                    <div className="text-left">
+                                        <p className="text-sm font-bold text-gray-800">
+                                            20% reducere
+                                        </p>
+                                        <p className="text-sm text-gray-700">
+                                            folosind codul promo <br />
+                                            AUT20
+                                        </p>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <h2 className="text-2xl md:text-3xl font-bold text-center mb-10">
+                        <h2
+                            id="maijos"
+                            className="text-2xl md:text-3xl font-bold text-center mb-10"
+                        >
                             Produse disponibile
                         </h2>
 
@@ -947,6 +1198,7 @@ export default function ShopPage() {
                                                                     alt={
                                                                         product.name
                                                                     }
+                                                                    loading="lazy"
                                                                     className="w-full md:h-full md:object-cover object-contain rounded-md"
                                                                 />
                                                                 <button
@@ -1079,6 +1331,7 @@ export default function ShopPage() {
                         <img
                             src={selectedProduct.image}
                             alt={selectedProduct.name}
+                            loading="lazy"
                             className="w-full h-full object-cover rounded mb-4"
                         />
 

@@ -8,7 +8,7 @@
             </url>
     <url>
     <loc>https://www.batranul-osu.ro/magazin</loc>
-    <priority>0.9</priority>
+    <priority>1.0</priority>
             </url>
     <url>
     <loc>https://www.batranul-osu.ro/contact</loc>
@@ -21,5 +21,9 @@
     <url>
     <loc>https://www.batranul-osu.ro/valori-nutritionale</loc>
     <priority>0.6</priority>
+            </url>
+    <url>
+    <loc>https://www.batranul-osu.ro/editie-speciala</loc>
+    <priority>1.0</priority>
             </url>
 </urlset>
