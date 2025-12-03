@@ -80,6 +80,11 @@ export default function EditieLimitata() {
     const [selectedWeight, setSelectedWeight] = useState(null);
     const [isAnimatingOut, setIsAnimatingOut] = useState(false);
 
+    const [contactStatus, setContactStatus] = useState({
+        message: "",
+        success: null,
+    });
+
     const [formData, setFormData] = useState({
         name: "",
         phone: "",
@@ -251,6 +256,60 @@ export default function EditieLimitata() {
         );
     };
 
+    const sendEmail = (e) => {
+        e.preventDefault();
+
+        const formEl = form.current;
+        const name = formEl.user_name.value.trim();
+        const email = formEl.user_email.value.trim();
+        const phone = formEl.user_phone.value.trim();
+        const message = formEl.message.value.trim();
+
+        const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        const isValidPhone = /^0\d{9}$/.test(phone); // Număr românesc
+
+        if (!isValidEmail) {
+            setContactStatus({
+                message: "Adresa de email nu este validă.",
+                success: false,
+            });
+            return;
+        }
+
+        if (!isValidPhone) {
+            setContactStatus({
+                message:
+                    "Numărul de telefon trebuie să aibă 10 cifre și să înceapă cu 0.",
+                success: false,
+            });
+            return;
+        }
+
+        emailjs
+            .sendForm(
+                "service_p8d703k",
+                "template_lfv6klb",
+                formEl,
+                "BGDnmfh9gasmMLC2U"
+            )
+            .then(
+                () => {
+                    setContactStatus({
+                        message: "Mesaj trimis cu succes!",
+                        success: true,
+                    });
+                    formEl.reset();
+                },
+                (error) => {
+                    console.error("EmailJS error:", error);
+                    setContactStatus({
+                        message: "Eroare la trimiterea mesajului.",
+                        success: false,
+                    });
+                }
+            );
+    };
+
     const subtotal = cartItems.reduce((sum, i) => sum + i.price * i.qty, 0);
     const isPickup = formData.deliveryType === "ridicare";
     const discountedSubtotal = subtotal * ((100 - discount) / 100);
@@ -290,8 +349,8 @@ export default function EditieLimitata() {
             !formData.email ||
             !formData.deliveryType ||
             !formData.paymentMethod ||
-            (formData.deliveryType === "livrare" &&
-                (!formData.street || !formData.city))
+            !formData.street ||
+            !formData.city
         ) {
             setFormErrors({
                 general: "Te rugăm să completezi toate câmpurile obligatorii.",
@@ -402,7 +461,7 @@ export default function EditieLimitata() {
             city: formData.city,
             notes: formData.notes,
             scheduledDate: formData.scheduledDate || "Azi",
-            scheduledTime: formData.scheduledHour || "La orice oră",
+            scheduledHour: formData.scheduledHour || "La orice oră",
             items: cartItems
                 .map((item) => {
                     const originalTotal = (item.qty * item.price) / 100;
@@ -633,7 +692,7 @@ export default function EditieLimitata() {
                                         <span className="text-2xl font-bold">
                                             {(p.basePrice / 100).toFixed(2)} RON
                                         </span>
-                                        <span className="text-gray-500 text-sm ml-2">
+                                        <span className="text-gray-500 text-sm mx-2">
                                             de la
                                         </span>
 
@@ -653,6 +712,87 @@ export default function EditieLimitata() {
                     </div>
                 </section>
             </main>
+            <section id="locatie" className=" mx-auto py-10 text-center">
+                <h2 className="text-3xl font-bold mb-6">
+                    Vrei să ne vizitezi?
+                </h2>
+                <p className="text-gray-600 mb-10">
+                    Aici este locația noastră!
+                </p>
+
+                <div className="w-full h-96 overflow-hidden shadow-lg border border-gray-300">
+                    <iframe
+                        title="Locație Osu"
+                        width="100%"
+                        height="100%"
+                        frameBorder="0"
+                        style={{ border: 0 }}
+                        src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d499.0492402131647!2d25.564468792704826!3d45.664276020213336!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x40b35b0050861a07%3A0xcd6693c330236943!2zT8iYVSBLdXJ0b3MgyJlpIExhbmdvyJk!5e0!3m2!1sen!2sro!4v1750363162698!5m2!1sen!2sro"
+                        allowFullScreen=""
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        className="w-full h-full"
+                    ></iframe>
+                </div>
+            </section>
+            <section
+                id="contact"
+                className="max-w-3xl mx-auto px-4 py-10 text-center"
+            >
+                <h2 className="text-3xl font-bold mb-6">Contactează-ne</h2>
+                <p className="text-gray-600 mb-10">
+                    Ai alte întrebări? Lasă-ne un mesaj și revenim rapid!
+                </p>
+
+                <form ref={form} onSubmit={sendEmail} className="space-y-6">
+                    <input
+                        type="text"
+                        name="user_name"
+                        placeholder="Nume"
+                        required
+                        className="w-full border border-gray-300 rounded-lg px-4 py-3 shadow-sm placeholder-italic placeholder-gray-400 focus:ring-2 focus:ring-emerald-800 focus:outline-none"
+                    />
+                    <input
+                        type="email"
+                        name="user_email"
+                        placeholder="Email"
+                        required
+                        className="w-full border border-gray-300 rounded-lg px-4 py-3 shadow-sm placeholder-italic placeholder-gray-400 focus:ring-2 focus:ring-emerald-800 focus:outline-none"
+                    />
+                    <input
+                        type="tel"
+                        name="user_phone"
+                        placeholder="Telefon"
+                        required
+                        className="w-full border border-gray-300 rounded-lg px-4 py-3 shadow-sm placeholder-italic placeholder-gray-400 focus:ring-2 focus:ring-emerald-800 focus:outline-none"
+                    />
+                    <textarea
+                        name="message"
+                        rows="5"
+                        placeholder="Mesaj"
+                        required
+                        className="w-full border border-gray-300 rounded-lg px-4 py-3 shadow-sm placeholder-italic placeholder-gray-400 focus:ring-2 focus:ring-emerald-800 focus:outline-none"
+                    ></textarea>
+                    {contactStatus.message && (
+                        <p
+                            className={`text-sm ${
+                                contactStatus.success
+                                    ? "text-green-600"
+                                    : "text-red-600"
+                            }`}
+                        >
+                            {contactStatus.message}
+                        </p>
+                    )}
+
+                    <button
+                        type="submit"
+                        className="bg-emerald-800 text-white px-6 py-3 rounded-full font-bold hover:bg-red-500 transition"
+                    >
+                        Trimite mesajul
+                    </button>
+                </form>
+            </section>
 
             {/* Modal */}
             {selectedProduct && (
@@ -1255,7 +1395,10 @@ function CartModal({
                             }}
                         >
                             <ReCAPTCHA
+                                //live
                                 sitekey="6LeqX14rAAAAAI4xzmtc7bylyMAbvVwDPJvSBi2l"
+                                //test
+                                // sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
                                 onChange={() => setCaptchaVerified(true)}
                             />
                         </div>
@@ -1273,7 +1416,9 @@ function CartModal({
                                 !isEmailValid
                             }
                             className={`w-full mt-4 py-2 rounded font-bold transition ${
-                                cartItems.length === 0
+                                cartItems.length === 0 ||
+                                !isPhoneValid ||
+                                !isEmailValid
                                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                                     : "bg-emerald-800 text-white hover:bg-red-500"
                             }`}

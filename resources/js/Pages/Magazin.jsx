@@ -1800,7 +1800,7 @@ export default function ShopPage() {
                                                 setFormData({
                                                     ...formData,
                                                     scheduledDate: newDate,
-                                                    scheduledHour: "asap", // resetezi ora
+                                                    scheduledTime: "asap", // resetezi ora
                                                 });
                                             }
                                         }}
@@ -1808,11 +1808,11 @@ export default function ShopPage() {
 
                                     <select
                                         className="w-1/2 border border-gray-300 rounded-md shadow-sm px-3 py-2 placeholder-italic"
-                                        value={formData.scheduledHour || "asap"}
+                                        value={formData.scheduledTime || "asap"}
                                         onChange={(e) =>
                                             setFormData({
                                                 ...formData,
-                                                scheduledHour: e.target.value,
+                                                scheduledTime: e.target.value,
                                             })
                                         }
                                     >
@@ -1899,7 +1899,10 @@ export default function ShopPage() {
                                     !isEmailValid
                                 }
                                 className={`w-full mt-4 py-2 rounded font-bold transition ${
-                                    !isWorkingHours || cartItems.length === 0
+                                    !isWorkingHours ||
+                                    cartItems.length === 0 ||
+                                    !isPhoneValid ||
+                                    !isEmailValid
                                         ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                                         : "bg-emerald-800 text-white hover:bg-red-500"
                                 }`}
