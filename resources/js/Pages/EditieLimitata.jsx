@@ -4,6 +4,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import emailjs from "@emailjs/browser";
 import ReCAPTCHA from "react-google-recaptcha";
 import SiteLayout from "@/Layouts/SiteLayout";
+import { Link } from "@inertiajs/react";
 
 export default function EditieLimitata() {
     // ----- CONFIG: Limited edition cozonaci 2025 -----
@@ -525,6 +526,85 @@ export default function EditieLimitata() {
 
     const totalItemCount = cartItems.reduce((s, i) => s + i.qty, 0);
 
+    const slides = [
+        {
+            id: 1,
+            variant: "cozonaci",
+            img: "/img/cozonaci.jpeg",
+            title: "Cozonac Artizanal de Crăciun",
+            subtitle:
+                "Disponibil doar în sezon • Făcut în casă și cu umplutură generoasă",
+            link: "#cozonac",
+            ctaHref: "#cozonac", // where the CTA should go
+            ctaLabel: "Comandă acum!",
+        },
+        {
+            id: 2,
+            variant: "default",
+            img: "/img/cover-delivery.png",
+            title: "Oșu Kurtos și Langos",
+            subtitle: (
+                <>
+                    Program Locație: L-D: 10:00 - 24:00 <br />
+                    Program Livrări: 11:00 - 21:30
+                    <br /> Str. Egretei 1, Brașov
+                </>
+            ),
+            link: "/magazin",
+            ctaHref: "/magazin", // where the CTA should go
+            ctaLabel: "Vezi mai multe!",
+        },
+    ];
+
+    const [current, setCurrent] = useState(0);
+
+    // Auto-advance; when at the last slide, reset to 0 (loop),
+    // but arrows still hide contextually at the ends.
+    useEffect(() => {
+        const t = setInterval(() => {
+            setCurrent((p) => (p === slides.length - 1 ? 0 : p + 1));
+        }, 5000);
+        return () => clearInterval(t);
+    }, [slides.length]);
+
+    const hasPrev = current > 0;
+    const hasNext = current < slides.length - 1;
+
+    const prev = () => setCurrent((p) => Math.max(0, p - 1));
+    const next = () => setCurrent((p) => Math.min(slides.length - 1, p + 1));
+
+    const [touchStartX, setTouchStartX] = useState(null);
+    const [touchEndX, setTouchEndX] = useState(null);
+
+    const handleTouchStart = (e) => {
+        setTouchStartX(e.touches[0].clientX);
+        setTouchEndX(null);
+    };
+
+    const handleTouchMove = (e) => {
+        setTouchEndX(e.touches[0].clientX);
+    };
+
+    const handleTouchEnd = () => {
+        if (touchStartX === null || touchEndX === null) return;
+
+        const diff = touchStartX - touchEndX;
+        const threshold = 50; // px – how much the user has to swipe
+
+        if (Math.abs(diff) > threshold) {
+            if (diff > 0 && current < slides.length - 1) {
+                // swipe left -> next
+                next();
+            } else if (diff < 0 && current > 0) {
+                // swipe right -> prev
+                prev();
+            }
+        }
+
+        setTouchStartX(null);
+        setTouchEndX(null);
+    };
+
     return (
         <SiteLayout
             totalItemCount={totalItemCount}
@@ -532,31 +612,219 @@ export default function EditieLimitata() {
             setIsCartOpen={openCart}
         >
             <main className="max-w-6xl mx-auto py-10 md:px-6 pt-[120px] md:pt-[130px]">
-                {/* Hero banner */}
-                <div className="max-w-6xl mx-auto px-4 md:px-0">
-                    <div className="relative overflow-hidden rounded-2xl group w-full select-none touch-pan-y">
-                        <a href="#cozonac" className="block relative w-full">
-                            <div className="relative w-full h-[58vw] sm:h-[48vw] md:h-[420px] lg:h-[480px]">
-                                <img
-                                    src="/img/cozonaci.jpeg"
-                                    alt="Cozonac de Crăciun – Ediție Limitată"
-                                    className="absolute inset-0 w-full h-full object-cover"
+                <div className="flex items-center my-4">
+                    <Link
+                        href="/magazin"
+                        className="flex items-center text-emerald-800 hover:text-emerald-600 focus:outline-none"
+                    >
+                        {/* Small back arrow SVG icon */}
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-6 w-6 mr-1"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M15 19l-7-7 7-7"
+                            />
+                        </svg>
+                        <span className="text-lg">Înapoi la Magazin</span>
+                    </Link>
+                </div>
+
+                <div className="max-w-6xl mx-auto px-4 md:px-0 md:pb-10">
+                    {/* Rounded container only */}
+                    <div
+                        className="relative overflow-hidden rounded-2xl group w-full select-none touch-pan-y"
+                        onTouchStart={handleTouchStart}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
+                    >
+                        {/* Track */}
+                        <div
+                            className="flex transition-transform duration-700 ease-in-out"
+                            style={{
+                                transform: `translateX(-${current * 100}%)`,
+                            }}
+                        >
+                            {slides.map((s) => {
+                                const hasCTA = Boolean(s.ctaHref || s.ctaLabel);
+
+                                const handleCTA = (e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+
+                                    if (s.ctaHref?.startsWith("#")) {
+                                        // smooth scroll to section
+                                        const target = document.querySelector(
+                                            s.ctaHref
+                                        );
+                                        if (target) {
+                                            const offset = 100; // adjust if you have a fixed navbar
+                                            const top =
+                                                target.getBoundingClientRect()
+                                                    .top +
+                                                window.scrollY -
+                                                offset;
+                                            window.scrollTo({
+                                                top,
+                                                behavior: "smooth",
+                                            });
+                                        }
+                                    } else if (s.ctaHref) {
+                                        // normal navigation
+                                        window.location.href = s.ctaHref;
+                                    }
+                                };
+
+                                return (
+                                    <a
+                                        key={s.id}
+                                        href={s.link}
+                                        className="min-w-full basis-full shrink-0 block relative"
+                                    >
+                                        <div className="relative w-full h-[58vw] sm:h-[48vw] md:h-[420px] lg:h-[480px]">
+                                            <img
+                                                src={s.img}
+                                                alt={s.title}
+                                                className="absolute inset-0 w-full h-full object-cover"
+                                            />
+                                            <div className="absolute inset-0 bg-black/30" />
+
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white px-3 sm:px-4">
+                                                {s.variant === "cozonaci" ? (
+                                                    <>
+                                                        <span className="inline-block bg-red-600/90 text-white text-xs sm:text-sm font-bold px-3 py-1 rounded-full mb-3">
+                                                            EDIȚIE LIMITATĂ
+                                                        </span>
+                                                        <h1 className="text-lg sm:text-2xl md:text-4xl font-bold mb-2 drop-shadow">
+                                                            {s.title}
+                                                        </h1>
+                                                        <p className="text-xs sm:text-sm md:text-base opacity-95">
+                                                            {s.subtitle}
+                                                        </p>
+                                                        {hasCTA && (
+                                                            <button
+                                                                onClick={
+                                                                    handleCTA
+                                                                }
+                                                                className="mt-8 px-5 py-2 rounded-md font-bold bg-emerald-800 hover:bg-red-500 transition hidden md:block"
+                                                            >
+                                                                {s.ctaLabel ||
+                                                                    "Află mai mult"}
+                                                            </button>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <h1 className="text-lg sm:text-xl md:text-4xl font-bold mb-1 sm:mb-2 drop-shadow">
+                                                            {s.title}
+                                                        </h1>
+                                                        <h2 className="text-xs sm:text-sm md:text-base opacity-95 leading-snug">
+                                                            {s.subtitle}
+                                                        </h2>
+                                                        {hasCTA && (
+                                                            <button
+                                                                onClick={
+                                                                    handleCTA
+                                                                }
+                                                                className="mt-8 px-4 py-2 rounded-md font-semibold bg-red-600 hover:bg-red-700 transition hidden md:block"
+                                                            >
+                                                                {s.ctaLabel}
+                                                            </button>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </a>
+                                );
+                            })}
+                        </div>
+
+                        {/* Subtle, contextual arrows (outside links) */}
+                        {hasPrev && (
+                            <button
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    prev();
+                                }}
+                                aria-label="Previous slide"
+                                className="absolute left-2 sm:left-3 md:left-5 top-1/2 -translate-y-1/2 z-20
+                       text-white/70 hover:text-white
+                       bg-white/10 hover:bg-white/20
+                       opacity-60 group-hover:opacity-100
+                       p-2 rounded-full backdrop-blur-sm transition hidden md:block"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    className="w-5 h-5 md:w-6 md:h-6"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M15.75 19.5 8.25 12l7.5-7.5"
+                                    />
+                                </svg>
+                            </button>
+                        )}
+
+                        {hasNext && (
+                            <button
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    next();
+                                }}
+                                aria-label="Next slide"
+                                className="absolute right-2 sm:right-3 md:right-5 top-1/2 -translate-y-1/2 z-20
+                       text-white/70 hover:text-white
+                       bg-white/10 hover:bg-white/20
+                       opacity-60 group-hover:opacity-100
+                       p-2 rounded-full backdrop-blur-sm transition hidden md:block"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    className="w-5 h-5 md:w-6 md:h-6"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="m8.25 4.5 7.5 7.5-7.5 7.5"
+                                    />
+                                </svg>
+                            </button>
+                        )}
+
+                        {/* Dots */}
+                        <div className="absolute bottom-2 sm:bottom-3 left-0 right-0 flex justify-center gap-2 z-20">
+                            {slides.map((_, i) => (
+                                <button
+                                    key={i}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        setCurrent(i);
+                                    }}
+                                    aria-label={`Go to slide ${i + 1}`}
+                                    className={`h-2.5 rounded-full transition-all ${
+                                        current === i
+                                            ? "w-6 bg-white"
+                                            : "w-2.5 bg-white/50 hover:bg-white/70"
+                                    }`}
                                 />
-                                <div className="absolute inset-0 bg-black/30" />
-                                <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white px-3 sm:px-4">
-                                    <span className="inline-block bg-red-600/90 text-white text-xs sm:text-sm font-bold px-3 py-1 rounded-full mb-3">
-                                        EDIȚIE LIMITATĂ
-                                    </span>
-                                    <h1 className="text-lg sm:text-2xl md:text-4xl font-bold mb-2 drop-shadow">
-                                        Cozonaci Artizanali de Crăciun
-                                    </h1>
-                                    <p className="text-xs sm:text-sm md:text-base opacity-95">
-                                        Trei rețete speciale • 750 g • Umpluturi
-                                        generoase
-                                    </p>
-                                </div>
-                            </div>
-                        </a>
+                            ))}
+                        </div>
                     </div>
                 </div>
 

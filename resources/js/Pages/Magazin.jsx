@@ -54,7 +54,7 @@ export default function ShopPage() {
     const currentMinute = now.getMinutes();
 
     const isAfterOpening =
-        currentHour > 10 || (currentHour === 10 && currentMinute >= 0);
+        currentHour > 10 || (currentHour === 11 && currentMinute >= 0);
     const isBeforeClosing =
         currentHour < 21 || (currentHour === 21 && currentMinute <= 30);
 
@@ -62,8 +62,8 @@ export default function ShopPage() {
 
     const workingMessage = !isWorkingHours
         ? currentHour < 10 || (currentHour === 10 && currentMinute < 0)
-            ? "Programul începe la ora 10:00."
-            : "Programul s-a încheiat pentru azi. Revenim mâine la 10:00."
+            ? "Programul de livrări începe la ora 11:00."
+            : "Programul de livrări s-a încheiat pentru azi. Revenim mâine la 11:00."
         : "";
 
     const today = new Date().toISOString().split("T")[0];
@@ -80,6 +80,22 @@ export default function ShopPage() {
     const slides = [
         {
             id: 1,
+            variant: "default",
+            img: "/img/cover-delivery.png",
+            title: "Oșu Kurtos și Langos",
+            subtitle: (
+                <>
+                    Program Locație: L-D: 10:00 - 24:00 <br />
+                    Program Livrări: 11:00 - 21:30
+                    <br /> Str. Egretei 1, Brașov
+                </>
+            ),
+            link: "#maijos",
+            ctaHref: "#maijos", // where the CTA should go
+            ctaLabel: "Comandă acum!",
+        },
+        {
+            id: 2,
             variant: "cozonaci",
             img: "/img/cozonaci.jpeg",
             title: "Cozonac Artizanal de Crăciun",
@@ -88,22 +104,6 @@ export default function ShopPage() {
             link: "/editie-speciala",
             ctaHref: "/editie-speciala", // where the CTA should go
             ctaLabel: "Vezi mai multe!",
-        },
-        {
-            id: 2,
-            variant: "default",
-            img: "/img/cover-delivery.png",
-            title: "Oșu Kurtos și Langos",
-            subtitle: (
-                <>
-                    Program Locație: L-D: 10:00 - 24:00 <br />
-                    Program Livrări: 10:00 - 21:30
-                    <br /> Str. Egretei 1, Brașov
-                </>
-            ),
-            link: "#maijos",
-            ctaHref: "#maijos", // where the CTA should go
-            ctaLabel: "Comandă acum!",
         },
     ];
 
@@ -307,6 +307,7 @@ export default function ShopPage() {
 
     const categoryOrder = [
         "Ediție Limitată",
+        "Produse de Post",
         "Langos",
         "Kurtos Umplut",
         "Kurtos",
