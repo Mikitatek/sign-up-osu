@@ -85,9 +85,10 @@ export default function ShopPage() {
             title: "Oșu Kurtos și Langos",
             subtitle: (
                 <>
-                    Program Locație: L-D: 10:00 - 24:00 <br />
-                    Program Livrări: 11:00 - 21:30
-                    <br /> Str. Egretei 1, Brașov
+                    Program Locație: L-D: 10:00 - 24:00
+                    {/*<br />Program Livrări: 11:00 - 21:30 */}
+                    <br />
+                    Str. Egretei 1, Brașov
                 </>
             ),
             link: "#maijos",

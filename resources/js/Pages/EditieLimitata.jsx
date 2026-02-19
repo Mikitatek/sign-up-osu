@@ -130,7 +130,7 @@ export default function EditieLimitata() {
 
     // ----- Stripe -----
     const stripePromise = loadStripe(
-        "pk_live_51RWwVcGrsyEky6rcB0YtwifR8JwxQenPKJx1YS0iYlsZTGJiywebGqnJlZdBl1c9f1j5FD48FGLx974zydC2fUjc00WYdqKaNi"
+        "pk_live_51RWwVcGrsyEky6rcB0YtwifR8JwxQenPKJx1YS0iYlsZTGJiywebGqnJlZdBl1c9f1j5FD48FGLx974zydC2fUjc00WYdqKaNi",
     );
 
     // ----- LocalStorage (separate) -----
@@ -219,7 +219,7 @@ export default function EditieLimitata() {
             const existing = prev.find((i) => i.cartKey === cartKey);
             if (existing) {
                 return prev.map((i) =>
-                    i.cartKey === cartKey ? { ...i, qty: i.qty + 1 } : i
+                    i.cartKey === cartKey ? { ...i, qty: i.qty + 1 } : i,
                 );
             }
             return [
@@ -251,9 +251,9 @@ export default function EditieLimitata() {
         setCartItems((prev) =>
             prev
                 .map((i) =>
-                    i.cartKey === cartKey ? { ...i, qty: i.qty + delta } : i
+                    i.cartKey === cartKey ? { ...i, qty: i.qty + delta } : i,
                 )
-                .filter((i) => i.qty > 0)
+                .filter((i) => i.qty > 0),
         );
     };
 
@@ -291,7 +291,7 @@ export default function EditieLimitata() {
                 "service_p8d703k",
                 "template_lfv6klb",
                 formEl,
-                "BGDnmfh9gasmMLC2U"
+                "BGDnmfh9gasmMLC2U",
             )
             .then(
                 () => {
@@ -307,7 +307,7 @@ export default function EditieLimitata() {
                         message: "Eroare la trimiterea mesajului.",
                         success: false,
                     });
-                }
+                },
             );
     };
 
@@ -434,7 +434,7 @@ export default function EditieLimitata() {
 
             localStorage.setItem(
                 "osu_order_data",
-                JSON.stringify({ formData, items: cartItems, discount, total })
+                JSON.stringify({ formData, items: cartItems, discount, total }),
             );
 
             const session = await response.json();
@@ -472,9 +472,9 @@ export default function EditieLimitata() {
                         ? `${item.name} (${item.option}) x ${
                               item.qty
                           } = ${discountedTotal.toFixed(
-                              2
+                              2,
                           )} RON (redus din ${originalTotal.toFixed(
-                              2
+                              2,
                           )} RON, -${discount}%)`
                         : `${item.name} (${item.option}) x ${
                               item.qty
@@ -489,7 +489,7 @@ export default function EditieLimitata() {
                 "service_p8d703k",
                 "template_x3q7wos",
                 emailData,
-                "BGDnmfh9gasmMLC2U"
+                "BGDnmfh9gasmMLC2U",
             )
             .then(() => {
                 setOrderSuccessMessage("✅ Comanda a fost trimisă cu succes!");
@@ -661,7 +661,7 @@ export default function EditieLimitata() {
                                     if (s.ctaHref?.startsWith("#")) {
                                         // smooth scroll to section
                                         const target = document.querySelector(
-                                            s.ctaHref
+                                            s.ctaHref,
                                         );
                                         if (target) {
                                             const offset = 100; // adjust if you have a fixed navbar
@@ -907,7 +907,7 @@ export default function EditieLimitata() {
                                 )}
                                 <span className="text-2xl font-extrabold text-red-600">
                                     {(BUNDLE_PRODUCT.basePrice / 100).toFixed(
-                                        2
+                                        2,
                                     )}{" "}
                                     RON
                                 </span>
@@ -1158,7 +1158,7 @@ export default function EditieLimitata() {
                                             <span className="ml-auto text-xs text-gray-600">
                                                 {w.priceDelta > 0 ? "+" : ""}
                                                 {(w.priceDelta / 100).toFixed(
-                                                    2
+                                                    2,
                                                 )}{" "}
                                                 RON
                                             </span>
@@ -1318,13 +1318,13 @@ function CartModal({
                                                             <>
                                                                 <span className="line-through mr-2">
                                                                     {fullPrice.toFixed(
-                                                                        2
+                                                                        2,
                                                                     )}{" "}
                                                                     RON
                                                                 </span>
                                                                 <span className="text-green-600 font-semibold">
                                                                     {discountedPrice.toFixed(
-                                                                        2
+                                                                        2,
                                                                     )}{" "}
                                                                     RON
                                                                 </span>
@@ -1332,7 +1332,7 @@ function CartModal({
                                                         ) : (
                                                             <span>
                                                                 {fullPrice.toFixed(
-                                                                    2
+                                                                    2,
                                                                 )}{" "}
                                                                 RON
                                                             </span>
@@ -1344,7 +1344,7 @@ function CartModal({
                                                         onClick={() =>
                                                             updateQuantity(
                                                                 item.cartKey,
-                                                                -1
+                                                                -1,
                                                             )
                                                         }
                                                         className="px-2 py-1 bg-gray-200 rounded"
@@ -1356,7 +1356,7 @@ function CartModal({
                                                         onClick={() =>
                                                             updateQuantity(
                                                                 item.cartKey,
-                                                                1
+                                                                1,
                                                             )
                                                         }
                                                         className="px-2 py-1 bg-gray-200 rounded"
@@ -1426,10 +1426,10 @@ function CartModal({
                             {formData.deliveryType === "ridicare"
                                 ? "Ridicare personală – fără cost transport"
                                 : transportFee > 0
-                                ? `+ Transport: ${(transportFee / 100).toFixed(
-                                      2
-                                  )} RON (gratuit peste 60 RON)`
-                                : "Transport gratuit (comenzi peste 60 RON)"}
+                                  ? `+ Transport: ${(
+                                        transportFee / 100
+                                    ).toFixed(2)} RON (gratuit peste 60 RON)`
+                                  : "Transport gratuit (comenzi peste 60 RON)"}
                         </p>
                         <p className="text-lg font-semibold mb-4">
                             Total: <span>{(total / 100).toFixed(2)} RON</span>
@@ -1621,7 +1621,7 @@ function CartModal({
                                 >
                                     <option value="asap">La orice oră</option>
                                     {generateTimeOptionsDynamic(
-                                        formData.scheduledDate || minOrderDate
+                                        formData.scheduledDate || minOrderDate,
                                     ).map((hour) => (
                                         <option key={hour} value={hour}>
                                             {hour}
