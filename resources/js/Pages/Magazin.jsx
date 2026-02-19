@@ -94,17 +94,17 @@ export default function ShopPage() {
             ctaHref: "#maijos", // where the CTA should go
             ctaLabel: "Comandă acum!",
         },
-        {
-            id: 2,
-            variant: "cozonaci",
-            img: "/img/cozonaci.jpeg",
-            title: "Cozonac Artizanal de Crăciun",
-            subtitle:
-                "Disponibil doar în sezon • Făcut în casă și cu umplutură generoasă",
-            link: "/editie-speciala",
-            ctaHref: "/editie-speciala", // where the CTA should go
-            ctaLabel: "Vezi mai multe!",
-        },
+        // {
+        //     id: 2,
+        //     variant: "cozonaci",
+        //     img: "/img/cozonaci.jpeg",
+        //     title: "Cozonac Artizanal de Crăciun",
+        //     subtitle:
+        //         "Disponibil doar în sezon • Făcut în casă și cu umplutură generoasă",
+        //     link: "/editie-speciala",
+        //     ctaHref: "/editie-speciala", // where the CTA should go
+        //     ctaLabel: "Vezi mai multe!",
+        // },
     ];
 
     const [current, setCurrent] = useState(0);
@@ -201,7 +201,7 @@ export default function ShopPage() {
             {
                 rootMargin: `-${STICKY_HEADER_HEIGHT + 10}px 0px 0px 0px`,
                 threshold: 0.3,
-            }
+            },
         );
 
         const elements = Object.entries(categoryRefs.current);
@@ -243,7 +243,7 @@ export default function ShopPage() {
 
                 if (!Array.isArray(data)) {
                     throw new Error(
-                        "Răspunsul de la /stripe-products nu este un array!"
+                        "Răspunsul de la /stripe-products nu este un array!",
                     );
                 }
 
@@ -346,24 +346,24 @@ export default function ShopPage() {
         const hasMuschi = selectedOptions.some(
             (opt) =>
                 opt.toLowerCase().includes("mușchi") ||
-                opt.toLowerCase().includes("muschi")
+                opt.toLowerCase().includes("muschi"),
         );
 
         if (Array.isArray(selectedProduct.prices)) {
             // Caută by option dacă există
             const basic = selectedProduct.prices.find(
-                (p) => p.metadata?.option?.toLowerCase() === "basic"
+                (p) => p.metadata?.option?.toLowerCase() === "basic",
             );
 
             const withMuschi = selectedProduct.prices.find(
-                (p) => p.metadata?.option?.toLowerCase() === "with_muschi"
+                (p) => p.metadata?.option?.toLowerCase() === "with_muschi",
             );
 
             const selected = hasMuschi ? withMuschi : basic;
 
             // Dacă nu are nici basic nici with_muschi, ia primul cu valoare > 0
             const fallback = selectedProduct.prices.find(
-                (p) => p.unit_amount > 0
+                (p) => p.unit_amount > 0,
             );
 
             return selected?.unit_amount ?? fallback?.unit_amount ?? 0;
@@ -404,18 +404,18 @@ export default function ShopPage() {
         const hasMuschi = options.some(
             (opt) =>
                 opt.toLowerCase().includes("mușchi") ||
-                opt.toLowerCase().includes("muschi")
+                opt.toLowerCase().includes("muschi"),
         );
 
         let basePrice = 0;
 
         if (Array.isArray(product.prices)) {
             const basic = product.prices.find(
-                (p) => p.metadata?.option?.toLowerCase() === "basic"
+                (p) => p.metadata?.option?.toLowerCase() === "basic",
             );
 
             const withMuschi = product.prices.find(
-                (p) => p.metadata?.option?.toLowerCase() === "with_muschi"
+                (p) => p.metadata?.option?.toLowerCase() === "with_muschi",
             );
 
             const selected = hasMuschi ? withMuschi : basic;
@@ -432,7 +432,7 @@ export default function ShopPage() {
                 return prev.map((item) =>
                     item.cartKey === cartKey
                         ? { ...item, qty: item.qty + 1 }
-                        : item
+                        : item,
                 );
             } else {
                 return [
@@ -466,20 +466,20 @@ export default function ShopPage() {
                 .map((item) =>
                     item.cartKey === cartKey
                         ? { ...item, qty: item.qty + delta }
-                        : item
+                        : item,
                 )
-                .filter((item) => item.qty > 0)
+                .filter((item) => item.qty > 0),
         );
     };
 
     const stripePromise = loadStripe(
         // "pk_test_51RWwVvGdiCrjXCJPiibfppHWqcGDeleP4lJJd1e0urRYgUpAePRc2gGQgCQML8PaHJbVwNoqm7oWm36ao0k0rRUJ00x7AxhAap"
-        "pk_live_51RWwVcGrsyEky6rcB0YtwifR8JwxQenPKJx1YS0iYlsZTGJiywebGqnJlZdBl1c9f1j5FD48FGLx974zydC2fUjc00WYdqKaNi"
+        "pk_live_51RWwVcGrsyEky6rcB0YtwifR8JwxQenPKJx1YS0iYlsZTGJiywebGqnJlZdBl1c9f1j5FD48FGLx974zydC2fUjc00WYdqKaNi",
     );
 
     const subtotal = cartItems.reduce(
         (sum, item) => sum + item.price * item.qty,
-        0
+        0,
     );
 
     // dacă e ridicare personală => transport 0
@@ -598,7 +598,7 @@ export default function ShopPage() {
                     items: cartItems,
                     discount,
                     total,
-                })
+                }),
             );
 
             const session = await response.json();
@@ -615,7 +615,7 @@ export default function ShopPage() {
         setSelectedOptions((prev) =>
             prev.includes(option)
                 ? prev.filter((opt) => opt !== option)
-                : [...prev, option]
+                : [...prev, option],
         );
     };
 
@@ -645,9 +645,9 @@ export default function ShopPage() {
                         return `${item.name} (${item.option}) x ${
                             item.qty
                         } = ${discountedTotal.toFixed(
-                            2
+                            2,
                         )} RON (redus din ${originalTotal.toFixed(
-                            2
+                            2,
                         )} RON, -${discount}%)`;
                     } else {
                         return `${item.name} (${item.option}) x ${
@@ -664,7 +664,7 @@ export default function ShopPage() {
                 "service_wz043lj",
                 "template_fx2v89x",
                 emailData,
-                "xweu0E67NPFqknP_c"
+                "xweu0E67NPFqknP_c",
             )
             .then(() => {
                 setOrderSuccessMessage("✅ Comanda a fost trimisă cu succes!");
@@ -733,7 +733,7 @@ export default function ShopPage() {
                 "service_p8d703k",
                 "template_lfv6klb",
                 formEl,
-                "BGDnmfh9gasmMLC2U"
+                "BGDnmfh9gasmMLC2U",
             )
             .then(
                 () => {
@@ -749,7 +749,7 @@ export default function ShopPage() {
                         message: "Eroare la trimiterea mesajului.",
                         success: false,
                     });
-                }
+                },
             );
     };
 
@@ -816,7 +816,7 @@ export default function ShopPage() {
                                     if (s.ctaHref?.startsWith("#")) {
                                         // smooth scroll to section
                                         const target = document.querySelector(
-                                            s.ctaHref
+                                            s.ctaHref,
                                         );
                                         if (target) {
                                             const offset = 100; // adjust if you have a fixed navbar
@@ -1015,13 +1015,13 @@ export default function ShopPage() {
                     </div>
                     <div className="md:col-span-3 space-y-10">
                         {/* Delivery info */}
-                        <div className="grid grid-cols-2 divide-x divide-gray-300 mt-6 text-center font-bold text-gray-400 px-4 md:px-0">
-                            <div className="flex flex-col items-center justify-center text-sm">
+                        <div className="grid grid-cols-1 divide-x divide-gray-300 mt-6 text-center font-bold text-gray-400 px-4 md:px-0">
+                            {/* <div className="flex flex-col items-center justify-center text-sm">
                                 <span className="text-lg text-black">
                                     18.00 RON
                                 </span>
                                 <span className="text-xs">livrare</span>
-                            </div>
+                            </div> */}
                             <div className="flex flex-col items-center justify-center text-sm">
                                 <span className="text-lg text-black">
                                     45–55
@@ -1029,12 +1029,12 @@ export default function ShopPage() {
                                 <span className="text-xs">min</span>
                             </div>
                         </div>
-                        <div>
+                        {/* <div>
                             <h1 className="text-sm md:text-md text-center mt-6 px-4 md:px-0">
                                 Livrare în: Brașov, Ghimbav, Cristian, Sânpetru,
                                 Stupini și Hărman
                             </h1>
-                        </div>
+                        </div> */}
                         {/* Scrollable promo cards */}
                         <div className="mt-6 overflow-x-auto scrollbar-hide px-4 md:px-0">
                             <div className="flex space-x-2 md:space-x-4 md:px-0">
@@ -1047,10 +1047,10 @@ export default function ShopPage() {
                                     />
                                     <div className="text-left">
                                         <p className="text-sm font-bold text-gray-800">
-                                            RON 0.00 livrare
+                                            Comenzi telefonice
                                         </p>
                                         <p className="text-sm text-gray-700">
-                                            la comenzile de peste 80 de lei
+                                            0759 673 848
                                         </p>
                                     </div>
                                 </div>
@@ -1064,11 +1064,11 @@ export default function ShopPage() {
                                     />
                                     <div className="text-left">
                                         <p className="text-sm font-bold text-gray-800">
-                                            20% reducere
+                                            Despre Comenzi
                                         </p>
                                         <p className="text-sm text-gray-700">
-                                            folosind codul promo <br />
-                                            AUT20
+                                            Acceptam doar <br />
+                                            Comenzi telefonice
                                         </p>
                                     </div>
                                 </div>
@@ -1105,7 +1105,7 @@ export default function ShopPage() {
 
                                                 if (
                                                     Array.isArray(
-                                                        product.prices
+                                                        product.prices,
                                                     )
                                                 ) {
                                                     const basic =
@@ -1113,7 +1113,7 @@ export default function ShopPage() {
                                                             (p) =>
                                                                 p.metadata
                                                                     ?.option ===
-                                                                "basic"
+                                                                "basic",
                                                         );
                                                     if (basic) {
                                                         displayPrice =
@@ -1127,7 +1127,7 @@ export default function ShopPage() {
                                                         className="flex flex-row m-2 bg-white border border-gray-200 rounded-lg min-h-[160px] shadow-md md:shadow-none hover:shadow-md transition"
                                                         onClick={() =>
                                                             setSelectedProduct(
-                                                                product
+                                                                product,
                                                             )
                                                         }
                                                     >
@@ -1147,7 +1147,7 @@ export default function ShopPage() {
                                                                         50
                                                                             ? product.description.slice(
                                                                                   0,
-                                                                                  50
+                                                                                  50,
                                                                               ) +
                                                                               "..."
                                                                             : product.description}
@@ -1166,26 +1166,26 @@ export default function ShopPage() {
                                                                         displayPrice /
                                                                         100
                                                                     ).toFixed(
-                                                                        2
+                                                                        2,
                                                                     )}{" "}
                                                                     RON
                                                                 </span>
-                                                                <button
+                                                                {/* <button
                                                                     onClick={(
-                                                                        e
+                                                                        e,
                                                                     ) => {
                                                                         e.stopPropagation();
                                                                         setSelectedProduct(
-                                                                            product
+                                                                            product,
                                                                         );
                                                                         setSelectedOptions(
-                                                                            []
+                                                                            [],
                                                                         );
                                                                     }}
                                                                     className="bg-emerald-800 text-white px-4 py-2 text-sm rounded hover:bg-red-500 font-bold hidden md:block"
                                                                 >
                                                                     Adaugă
-                                                                </button>
+                                                                </button> */}
                                                             </div>
                                                         </div>
 
@@ -1202,22 +1202,22 @@ export default function ShopPage() {
                                                                     loading="lazy"
                                                                     className="w-full md:h-full md:object-cover object-contain rounded-md"
                                                                 />
-                                                                <button
+                                                                {/* <button
                                                                     onClick={(
-                                                                        e
+                                                                        e,
                                                                     ) => {
                                                                         e.stopPropagation();
                                                                         setSelectedProduct(
-                                                                            product
+                                                                            product,
                                                                         );
                                                                         setSelectedOptions(
-                                                                            []
+                                                                            [],
                                                                         );
                                                                     }}
                                                                     className="absolute bottom-0 md:hidden right-0 bg-emerald-800 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg hover:bg-red-500 shadow"
                                                                 >
                                                                     +
-                                                                </button>
+                                                                </button> */}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1371,7 +1371,7 @@ export default function ShopPage() {
                                                                 ? selectedOptions[0] ===
                                                                   opt
                                                                 : selectedOptions.includes(
-                                                                      opt
+                                                                      opt,
                                                                   )
                                                         }
                                                         onChange={() => {
@@ -1379,18 +1379,18 @@ export default function ShopPage() {
                                                                 selectedProduct.isSingleOption
                                                             ) {
                                                                 setSelectedOptions(
-                                                                    [opt]
+                                                                    [opt],
                                                                 );
                                                             } else {
                                                                 toggleOption(
-                                                                    opt
+                                                                    opt,
                                                                 );
                                                             }
                                                         }}
                                                     />
                                                     <span>{opt}</span>
                                                 </label>
-                                            )
+                                            ),
                                         )}
                                     </div>
                                 </div>
@@ -1401,18 +1401,19 @@ export default function ShopPage() {
                         </p>
                         <button
                             onClick={() => {
-                                addToCart(selectedProduct, selectedOptions);
+                                // addToCart(selectedProduct, selectedOptions);
                                 handleClose();
                             }}
                             className="w-full bg-emerald-800 text-white py-2 rounded hover:bg-red-500 font-bold"
                         >
-                            Adaugă în coș
+                            {/* Adaugă în coș */}
+                            Închide
                         </button>
                     </div>
                 </div>
             )}
 
-            {orderSuccessMessage && (
+            {/* {orderSuccessMessage && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
                     <div className="bg-white text-emerald-800 text-xl font-bold px-6 py-4 rounded-lg shadow-xl text-center max-w-md w-full">
                         {orderSuccessMessage}
@@ -1452,7 +1453,7 @@ export default function ShopPage() {
                                 <>
                                     {/* <pre className="text-xs text-gray-400 overflow-x-auto">
                                     {JSON.stringify(cartItems, null, 2)}
-                                </pre> */}
+                                </pre> *
                                     <ul className="mb-4">
                                         {cartItems.map((item) => {
                                             const fullPrice =
@@ -1913,7 +1914,7 @@ export default function ShopPage() {
                         </div>
                     </div>
                 </div>
-            )}
+            )} */}
         </SiteLayout>
     );
 }

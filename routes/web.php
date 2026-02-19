@@ -30,7 +30,7 @@ Route::get('/termeni-si-conditii', [TermsController::class, 'show'])->name('term
 //MAGAZIN PART
 Route::get('/magazin', [MagazinController::class, 'showMagazin'])->name('magazin');
 
-Route::get('/editie-speciala', [MagazinController::class, 'showEditieLimitata'])->name('editie-speciala');
+// Route::get('/editie-speciala', [MagazinController::class, 'showEditieLimitata'])->name('editie-speciala');
 
 Route::get('/valori-nutritionale', [MagazinController::class, 'showValoriNutritionale'])->name('valori-nutritionale');
 
@@ -221,6 +221,12 @@ Route::get('/api/stripe/success', function (Request $request) {
 
 Route::get('/success', fn() => Inertia::render('Success'));
 Route::get('/cancel', fn() => Inertia::render('Cancel'));
+
+Route::fallback(function () {
+    return Inertia::render('Error404')
+        ->toResponse(request())
+        ->setStatusCode(404);
+})->name('404');
 
 
 Route::get('/dashboard', function () {

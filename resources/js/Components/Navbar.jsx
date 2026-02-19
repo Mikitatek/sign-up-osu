@@ -41,7 +41,7 @@ export default function Navbar({ totalItemCount, subtotal, setIsCartOpen }) {
                     </div>
 
                     {/* Cart button desktop */}
-                    {isCartRoute && (
+                    {/* {isCartRoute && (
                         <button
                             onClick={() => setIsCartOpen(true)}
                             className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 font-bold hidden md:block md:col-span-1"
@@ -50,7 +50,7 @@ export default function Navbar({ totalItemCount, subtotal, setIsCartOpen }) {
                         </button>
                     )}
 
-                    {/* Cart button mobile */}
+                    
                     {isCartRoute && (
                         <button
                             onClick={() => setIsCartOpen(true)}
@@ -90,7 +90,7 @@ export default function Navbar({ totalItemCount, subtotal, setIsCartOpen }) {
                                 ></span>
                             </button>
                         </div>
-                    )}
+                    )} */}
 
                     {/* Meniu mobil dropdown */}
                     {isMenuOpen && (
