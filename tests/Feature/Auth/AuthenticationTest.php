@@ -27,6 +27,20 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
+        // non-staff accounts land on the storefront, not the dashboard
+        $response->assertRedirect('/');
+    }
+
+    public function test_admins_are_redirected_to_the_dashboard_after_login(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $response = $this->post('/login', [
+            'email' => $admin->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertAuthenticated();
         $response->assertRedirect(route('dashboard', absolute: false));
     }
 
