@@ -2,17 +2,20 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class NewsletterSignup extends Model
 {
+    use HasFactory;
+
     // Specify the fields that can be mass-assigned
     protected $fillable = [
         'name',
         'email',
         'phone',
         'gdpr',
-        'newsletter_agreement'
+        'newsletter_agreement',
     ];
 
     // Optionally, you can cast boolean fields to ensure they are treated as booleans

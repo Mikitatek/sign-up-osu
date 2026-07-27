@@ -9,14 +9,20 @@ class RegistrationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_registration_screen_can_be_rendered(): void
+    /**
+     * Public registration is intentionally disabled (admin-only accounts).
+     * These tests assert that the routes stay closed. When customer
+     * registration is reintroduced (platform plan, Phase 2), replace them
+     * with the standard Breeze registration tests.
+     */
+    public function test_registration_screen_is_not_available(): void
     {
         $response = $this->get('/register');
 
-        $response->assertStatus(200);
+        $response->assertNotFound();
     }
 
-    public function test_new_users_can_register(): void
+    public function test_registration_endpoint_is_not_available(): void
     {
         $response = $this->post('/register', [
             'name' => 'Test User',
@@ -25,7 +31,7 @@ class RegistrationTest extends TestCase
             'password_confirmation' => 'password',
         ]);
 
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $this->assertGuest();
+        $response->assertStatus(405); // route doesn't accept POST
     }
 }

@@ -1,66 +1,82 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# OSU Shop
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel 11 + Inertia (React 18) + Tailwind storefront for OSU, with Stripe Checkout
+(migration to Netopia planned), a newsletter, and an admin dashboard.
 
-## About Laravel
+This repo is being evolved into the **API backend** of the OSU delivery platform
+(web + iOS/Android apps). See the development plan in the team's Claude project.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Requirements
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Either **Docker Desktop** (recommended, uses Laravel Sail) or a native setup with
+PHP 8.2+, Composer, MySQL 8 and Node 20+.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Quick start (Docker / Sail)
 
-## Learning Laravel
+```bash
+git clone https://github.com/Mikitatek/sign-up-osu.git
+cd sign-up-osu
+composer install            # needs local PHP once, to install Sail itself
+cp .env.example .env
+php artisan key:generate
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+./vendor/bin/sail up -d     # starts PHP, MySQL, Redis, Mailpit
+./vendor/bin/sail artisan migrate --seed
+./vendor/bin/sail npm install
+./vendor/bin/sail npm run dev
+```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+The app runs at http://localhost. Mailpit (catches all outgoing mail) is at
+http://localhost:8025.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Seeded admin login: `admin@example.com` / `password` (override with
+`SEED_ADMIN_*` vars in `.env`).
 
-## Laravel Sponsors
+Tip: add `alias sail='./vendor/bin/sail'` to your shell profile.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Quick start (native, no Docker)
 
-### Premium Partners
+```bash
+composer install
+cp .env.example .env        # set DB_HOST=127.0.0.1, REDIS_HOST=127.0.0.1, MAIL_HOST=127.0.0.1
+php artisan key:generate
+php artisan migrate --seed
+npm install
+composer run dev            # serves app + queue + logs + vite together
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+## Stripe (test mode)
 
-## Contributing
+Set test keys in `.env` — never live keys in development:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```
+STRIPE_SECRET=sk_test_...
+VITE_STRIPE_KEY=pk_test_...
+```
 
-## Code of Conduct
+To test webhooks locally once they exist (platform plan, Phase 2), use the
+[Stripe CLI](https://docs.stripe.com/stripe-cli):
+`stripe listen --forward-to localhost/webhooks/stripe`.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+> **Note:** payments are planned to migrate from Stripe to **Netopia** as part
+> of the checkout rebuild (Phase 2 of the platform plan).
 
-## Security Vulnerabilities
+## Tests & code style
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+php artisan test            # PHPUnit (sqlite in-memory, no setup needed)
+./vendor/bin/pint           # fix code style
+./vendor/bin/pint --test    # check only (what CI runs)
+```
 
-## License
+CI runs on every push/PR (`.github/workflows/ci.yml`): Pint, the test suite,
+and a production Vite build.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Project structure notes
+
+- Product catalog currently lives in **Stripe** (products + prices); the local
+  `product_visibilities` table only toggles what's shown. Moving the catalog
+  into the database is Phase 1 of the platform plan.
+- Public registration is **disabled on purpose** — accounts are admin-only until
+  customer accounts arrive in Phase 2.
+- Admin dashboard routes live under `/dashboard` (auth required).

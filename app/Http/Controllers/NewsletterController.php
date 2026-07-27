@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use App\Models\NewsletterSignup;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class NewsletterController extends Controller
@@ -39,7 +38,7 @@ class NewsletterController extends Controller
 
         // Pass the signups data to the Inertia view
         return Inertia::render('Dashboard/Newsletter', [
-            'signups' => $signups
+            'signups' => $signups,
         ]);
     }
 

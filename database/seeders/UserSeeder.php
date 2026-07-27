@@ -2,24 +2,27 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Seeder;
-use App\Models\User; // Adjust this to match your User model namespace
 
 class UserSeeder extends Seeder
 {
-    public function run()
+    /**
+     * Seed admin users.
+     *
+     * Credentials come from the environment so no secrets live in the repo.
+     * For local development the defaults below are fine; in production set
+     * SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD in .env before seeding.
+     */
+    public function run(): void
     {
-        // Create an admin user
-        User::create([
-            'name' => 'Michael Schneider',
-            'email' => 'mikitatek@gmail.com', // Change this to your desired email
-            'password' => bcrypt('13579@Password'), // Change this to your desired password
-        ]);
-        // Create an admin user
-        User::create([
-            'name' => 'Alexandra Coca',
-            'email' => 'calexc1705@gmail.com', // Change this to your desired email
-            'password' => bcrypt('13579@Password'), // Change this to your desired password
-        ]);
+        User::updateOrCreate(
+            ['email' => env('SEED_ADMIN_EMAIL', 'admin@example.com')],
+            [
+                'name' => env('SEED_ADMIN_NAME', 'Admin'),
+                'password' => bcrypt(env('SEED_ADMIN_PASSWORD', 'password')),
+                'email_verified_at' => now(),
+            ]
+        );
     }
 }
