@@ -1,0 +1,130 @@
+                TEST SRL
+          BRASOV JUDETUL BRASOV
+           PUNCT LUCRU CENTRAL
+~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+             RAPORT DETALIAT
+            JURNAL ELECTRONIC
+~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+SERIA APARATULUI:             TB0000000001
+SERIA FISCALA:                  4000000000
+CAUTARE DUPA                 DUPA DATA/ORA
+DE LA                     01-06-2026 10:00
+LA                        02-06-2026 20:00
+~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+                TEST SRL
+          BRASOV JUDETUL BRASOV
+           PUNCT LUCRU CENTRAL
+              CIF: 10000001
+           (NEPLATITOR DE TVA)
+~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+PRODUS A           2 BUC. X 10.00= 20.00 N
+SUBTOTAL                             20.00
+PRODUS B             1 BUC. X 5.50= 5.50 N
+SUBTOTAL                             25.50
+                              ------------
+TOTAL LEI                            25.50
+NUMERAR LEI                          30.00
+REST                                  4.50
+~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+TOTAL NEPLATITOR TVA                  0.00
+~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+Z:0001 BF:0001                NR.AMEF:0001
+ID BF:    40000000002026060110152300010001
+      DATA: 01-06-2026 ORA: 10:15:23
+S/N:TB0000000001               TD:00000010
+                BON FISCAL
+                TEST SRL
+          BRASOV JUDETUL BRASOV
+           PUNCT LUCRU CENTRAL
+              CIF: 10000001
+           (NEPLATITOR DE TVA)
+~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+PRODUS B             1 BUC. X 5.50= 5.50 N
+              ** ANULARE **
+PRODUS B           -1 BUC. X 5.50= -5.50 N
+PRODUS CU NUME FOARTE LUNG
+                   1 BUC. X 17.90= 17.90 N
+SUBTOTAL                             17.90
+                              ------------
+TOTAL LEI                            17.90
+CARD                                 17.90
+REST                                  0.00
+~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+TOTAL NEPLATITOR TVA                  0.00
+~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+Z:0001 BF:0002                NR.AMEF:0001
+ID BF:    40000000002026060112300000010002
+      DATA: 01-06-2026 ORA: 12:30:00
+S/N:TB0000000001               TD:00000011
+                BON FISCAL
+               BON NEFISCAL
+            {LOGO} 4000000000
+                TEST SRL
+          BRASOV JUDETUL BRASOV
+           PUNCT LUCRU CENTRAL
+              CIF: 10000001
+           (NEPLATITOR DE TVA)
+~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+                  RAPORT
+              FISCAL ZILNIC
+                Z NR:0001
+~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+NUMERAR                              25.50
+CARD                                 17.90
+~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+VAL. TOTAL VANZARI                   43.40
+~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+NUMAR BONURI FISCALE                     2
+~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+                              NR.AMEF:0001
+      DATA: 01-06-2026 ORA: 21:00:00
+S/N:TB0000000001               TD:00000012
+            {LOGO} 4000000000
+         [SHA-256 PENTRU Z:0001]
+     6B25247103548200A125330BF9B53F8F
+     091A4202EEE996A2C9A88FE985BC0A2E
+                TEST SRL
+          BRASOV JUDETUL BRASOV
+           PUNCT LUCRU CENTRAL
+              CIF: 10000001
+           (NEPLATITOR DE TVA)
+~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+          CIF CLIENT: RO12345678
+~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+PRODUS C           3 BUC. X 7.00= 21.00 N
+SUBTOTAL                             21.00
+                              ------------
+TOTAL LEI                            21.00
+ONLINE                               21.00
+REST                                  0.00
+~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+TOTAL NEPLATITOR TVA                  0.00
+~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+Z:0002 BF:0001                NR.AMEF:0001
+ID BF:    40000000002026060211050000020001
+      DATA: 02-06-2026 ORA: 11:05:00
+S/N:TB0000000001               TD:00000013
+                BON FISCAL
+               BON NEFISCAL
+            {LOGO} 4000000000
+                TEST SRL
+          BRASOV JUDETUL BRASOV
+           PUNCT LUCRU CENTRAL
+              CIF: 10000001
+           (NEPLATITOR DE TVA)
+~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+                  RAPORT
+              FISCAL ZILNIC
+                Z NR:0002
+~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+VAL. TOTAL VANZARI                   21.00
+~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+NUMAR BONURI FISCALE                     1
+~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+                              NR.AMEF:0001
+      DATA: 02-06-2026 ORA: 20:30:00
+S/N:TB0000000001               TD:00000014
+            {LOGO} 4000000000
+         [SHA-256 PENTRU Z:0002]
+     87A28EEC67A734706A27582F7ECA70A6
+     A9EE6B3972D8D9657CB1CABCAD4D6C83
