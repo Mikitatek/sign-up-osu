@@ -44,7 +44,8 @@ suprascrie datele din producție — fă întâi backup din phpMyAdmin).
 
 ## 4. Setări PHP în cPanel
 
-**MultiPHP Manager** → alege PHP **8.2** sau **8.3** pentru domeniu.
+**MultiPHP Manager** → alege PHP **8.3** (minim) sau **8.4** pentru domeniu —
+dependențele proiectului cer cel puțin 8.3.
 **Select PHP Version / Extensions** → activează: `mbstring`, `pdo_mysql`,
 `zip`, `gd`, `fileinfo`, `intl` (zip și gd sunt necesare pentru exportul
 Excel al rapoartelor JE).
