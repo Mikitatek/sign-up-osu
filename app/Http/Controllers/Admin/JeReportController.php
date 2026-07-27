@@ -421,7 +421,10 @@ class JeReportController extends Controller
 
         if (count($prices) > 1) {
             $first = $prices[0]['price'];
-            $last = $prices[count($prices) - 1]['price'];
+            // "current" = the level still in use most recently (ties: most sold)
+            $last = collect($prices)
+                ->sortBy([['last_seen', 'desc'], ['qty', 'desc']])
+                ->first()['price'];
             if ($first > 0 && abs($last - $first) > 0.005) {
                 $delta = ($last - $first) / $first * 100;
                 $dir = $delta >= 0 ? 'a crescut' : 'a scăzut';

@@ -93,8 +93,14 @@ export default function Product({
         ...h,
         label: String(h.hour).padStart(2, "0"),
     }));
+    // prețul curent = nivelul folosit cel mai recent (la egalitate, cel mai vândut)
     const currentPrice =
-        prices.length > 0 ? prices[prices.length - 1].price : null;
+        prices.length > 0
+            ? [...prices].sort(
+                  (a, b) =>
+                      b.last_seen.localeCompare(a.last_seen) || b.qty - a.qty
+              )[0].price
+            : null;
 
     return (
         <AuthenticatedLayout
