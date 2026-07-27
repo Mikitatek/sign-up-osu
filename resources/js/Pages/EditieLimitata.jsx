@@ -397,16 +397,8 @@ export default function EditieLimitata() {
         }
 
         try {
-            const transportItem =
-                transportFee > 0
-                    ? {
-                          name: "Taxa de transport",
-                          option: "-",
-                          price: transportFee,
-                          quantity: 1,
-                      }
-                    : null;
-
+            // Prețurile, discountul și transportul se calculează pe server,
+            // din prețurile reale Stripe — aici trimitem doar produsele alese.
             const response = await fetch("/create-checkout-session", {
                 method: "POST",
                 headers: {
@@ -416,19 +408,14 @@ export default function EditieLimitata() {
                         .getAttribute("content"),
                 },
                 body: JSON.stringify({
-                    items: [
-                        ...cartItems.map((item) => ({
-                            name: item.name,
-                            option: item.option || "-",
-                            price: item.price,
-                            quantity: item.qty,
-                        })),
-                        ...(transportItem ? [transportItem] : []),
-                    ],
+                    items: cartItems.map((item) => ({
+                        product_id: item.id,
+                        option: item.option || "-",
+                        quantity: item.qty,
+                    })),
+                    context: "editie-limitata",
                     promoCode: promoCode.trim(),
                     orderData: formData,
-                    discount,
-                    total,
                 }),
             });
 
@@ -441,6 +428,12 @@ export default function EditieLimitata() {
             if (session.id) {
                 const stripe = await stripePromise;
                 stripe.redirectToCheckout({ sessionId: session.id });
+            } else {
+                setFormErrors({
+                    general:
+                        session.error ||
+                        "Nu am putut porni plata. Te rugăm să încerci din nou.",
+                });
             }
         } catch (error) {
             console.error("Checkout error:", error);

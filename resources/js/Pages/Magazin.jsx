@@ -237,14 +237,12 @@ export default function ShopPage() {
     }, [selectedCategory]);
 
     useEffect(() => {
-        fetch("/stripe-products")
+        fetch("/products")
             .then((res) => res.json())
             .then((data) => {
-                console.log("Stripe fetch response:", data);
-
                 if (!Array.isArray(data)) {
                     throw new Error(
-                        "Răspunsul de la /stripe-products nu este un array!",
+                        "Răspunsul de la /products nu este un array!",
                     );
                 }
 
@@ -473,9 +471,11 @@ export default function ShopPage() {
         );
     };
 
+    // Publishable key comes from .env (VITE_STRIPE_KEY); falls back to the
+    // live key so existing production builds keep working until env is set.
     const stripePromise = loadStripe(
-        // "pk_test_51RWwVvGdiCrjXCJPiibfppHWqcGDeleP4lJJd1e0urRYgUpAePRc2gGQgCQML8PaHJbVwNoqm7oWm36ao0k0rRUJ00x7AxhAap"
-        "pk_live_51RWwVcGrsyEky6rcB0YtwifR8JwxQenPKJx1YS0iYlsZTGJiywebGqnJlZdBl1c9f1j5FD48FGLx974zydC2fUjc00WYdqKaNi",
+        import.meta.env.VITE_STRIPE_KEY ??
+            "pk_live_51RWwVcGrsyEky6rcB0YtwifR8JwxQenPKJx1YS0iYlsZTGJiywebGqnJlZdBl1c9f1j5FD48FGLx974zydC2fUjc00WYdqKaNi",
     );
 
     const subtotal = cartItems.reduce(
@@ -560,13 +560,8 @@ export default function ShopPage() {
         }
 
         try {
-            const transportItem = {
-                name: "Taxa de transport",
-                option: "-",
-                price: transportFee, // în bani (ex: 1600 pentru 16 RON)
-                quantity: 1,
-            };
-
+            // Prețurile, discountul și transportul se calculează pe server,
+            // din prețurile reale Stripe — aici trimitem doar produsele alese.
             const response = await fetch("/create-checkout-session", {
                 method: "POST",
                 headers: {
@@ -576,19 +571,14 @@ export default function ShopPage() {
                         .getAttribute("content"),
                 },
                 body: JSON.stringify({
-                    items: [
-                        ...cartItems.map((item) => ({
-                            name: item.name,
-                            option: item.option || "-",
-                            price: item.price,
-                            quantity: item.qty,
-                        })),
-                        ...(transportFee > 0 ? [transportItem] : []),
-                    ],
+                    items: cartItems.map((item) => ({
+                        product_id: item.id,
+                        option: item.option || "-",
+                        quantity: item.qty,
+                    })),
+                    context: "magazin",
                     promoCode: promoCode.trim(),
                     orderData: formData,
-                    discount: discount,
-                    total: total,
                 }),
             });
 
@@ -606,6 +596,12 @@ export default function ShopPage() {
             if (session.id) {
                 const stripe = await stripePromise;
                 stripe.redirectToCheckout({ sessionId: session.id });
+            } else {
+                setFormErrors({
+                    general:
+                        session.error ||
+                        "Nu am putut porni plata. Te rugăm să încerci din nou.",
+                });
             }
         } catch (error) {
             console.error("Checkout error:", error);

@@ -24,40 +24,58 @@ export default function AuthenticatedLayout({ header, children }) {
                             </div>
 
                             <div className="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                                <NavLink
-                                    href={route("dashboard")}
-                                    active={route().current("dashboard")}
-                                >
-                                    Dashboard
-                                </NavLink>
+                                {user.is_admin && (
+                                    <>
+                                        <NavLink
+                                            href={route("dashboard")}
+                                            active={route().current(
+                                                "dashboard"
+                                            )}
+                                        >
+                                            Dashboard
+                                        </NavLink>
 
-                                {/* Newsletter Tab */}
-                                <NavLink
-                                    href={route("dashboard.newsletter")}
-                                    active={route().current(
-                                        "dashboard.newsletter"
-                                    )}
-                                >
-                                    Newsletter
-                                </NavLink>
+                                        {/* Newsletter Tab */}
+                                        <NavLink
+                                            href={route("dashboard.newsletter")}
+                                            active={route().current(
+                                                "dashboard.newsletter"
+                                            )}
+                                        >
+                                            Newsletter
+                                        </NavLink>
 
-                                {/* Terms and Conditions Editor Tab */}
-                                <NavLink
-                                    href={route("dashboard.terms.editor")}
-                                    active={route().current(
-                                        "dashboard.terms.editor"
-                                    )}
-                                >
-                                    Terms Editor
-                                </NavLink>
-                                <NavLink
-                                    href={route("dashboard.products")}
-                                    active={route().current(
-                                        "dashboard.products"
-                                    )}
-                                >
-                                    Products
-                                </NavLink>
+                                        {/* Terms and Conditions Editor Tab */}
+                                        <NavLink
+                                            href={route(
+                                                "dashboard.terms.editor"
+                                            )}
+                                            active={route().current(
+                                                "dashboard.terms.editor"
+                                            )}
+                                        >
+                                            Terms Editor
+                                        </NavLink>
+                                        <NavLink
+                                            href={route("dashboard.products")}
+                                            active={route().current(
+                                                "dashboard.products"
+                                            )}
+                                        >
+                                            Products
+                                        </NavLink>
+                                        <NavLink
+                                            href={route(
+                                                "dashboard.je-reports.index"
+                                            )}
+                                            active={route().current(
+                                                "dashboard.je-reports.*"
+                                            )}
+                                        >
+                                            Rapoarte JE
+                                        </NavLink>
+                                    </>
+                                )}
                             </div>
                         </div>
 
@@ -156,34 +174,52 @@ export default function AuthenticatedLayout({ header, children }) {
                     }
                 >
                     <div className="space-y-1 pb-3 pt-2">
-                        <ResponsiveNavLink
-                            href={route("dashboard")}
-                            active={route().current("dashboard")}
-                        >
-                            Dashboard
-                        </ResponsiveNavLink>
+                        {user.is_admin && (
+                            <>
+                                <ResponsiveNavLink
+                                    href={route("dashboard")}
+                                    active={route().current("dashboard")}
+                                >
+                                    Dashboard
+                                </ResponsiveNavLink>
 
-                        {/* Newsletter Tab in mobile view */}
-                        <ResponsiveNavLink
-                            href={route("dashboard.newsletter")}
-                            active={route().current("dashboard.newsletter")}
-                        >
-                            Newsletter
-                        </ResponsiveNavLink>
+                                {/* Newsletter Tab in mobile view */}
+                                <ResponsiveNavLink
+                                    href={route("dashboard.newsletter")}
+                                    active={route().current(
+                                        "dashboard.newsletter"
+                                    )}
+                                >
+                                    Newsletter
+                                </ResponsiveNavLink>
 
-                        {/* Terms and Conditions Editor Tab in mobile view */}
-                        <ResponsiveNavLink
-                            href={route("dashboard.terms.editor")}
-                            active={route().current("dashboard.terms.editor")}
-                        >
-                            Terms Editor
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink
-                            href={route("dashboard.products")}
-                            active={route().current("dashboard.products")}
-                        >
-                            Products
-                        </ResponsiveNavLink>
+                                {/* Terms and Conditions Editor Tab in mobile view */}
+                                <ResponsiveNavLink
+                                    href={route("dashboard.terms.editor")}
+                                    active={route().current(
+                                        "dashboard.terms.editor"
+                                    )}
+                                >
+                                    Terms Editor
+                                </ResponsiveNavLink>
+                                <ResponsiveNavLink
+                                    href={route("dashboard.products")}
+                                    active={route().current(
+                                        "dashboard.products"
+                                    )}
+                                >
+                                    Products
+                                </ResponsiveNavLink>
+                                <ResponsiveNavLink
+                                    href={route("dashboard.je-reports.index")}
+                                    active={route().current(
+                                        "dashboard.je-reports.*"
+                                    )}
+                                >
+                                    Rapoarte JE
+                                </ResponsiveNavLink>
+                            </>
+                        )}
                     </div>
 
                     <div className="border-t border-gray-200 pb-1 pt-4">
