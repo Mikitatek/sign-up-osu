@@ -30,7 +30,7 @@ npm ci --no-audit --no-fund
 npm run build
 
 "$PHP" artisan migrate --force
-"$PHP" artisan storage:link || true
+[ -e public/storage ] || "$PHP" artisan storage:link
 
 "$PHP" artisan config:cache
 "$PHP" artisan route:cache

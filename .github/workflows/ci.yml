@@ -67,3 +67,24 @@ jobs:
         run: |
           npm ci
           npm run build
+
+  deploy:
+    name: Deploy to srv1
+    runs-on: ubuntu-latest
+    needs: [lint, tests, frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    concurrency:
+      group: deploy-srv1
+      cancel-in-progress: false
+    steps:
+      - name: Run deploy.sh on srv1 over SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.SRV1_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "${{ secrets.SRV1_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          # The key is locked to a forced command on the server, so the remote
+          # command here is ignored — deploy.sh runs regardless.
+          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes \
+              -o UserKnownHostsFile=~/.ssh/known_hosts -o StrictHostKeyChecking=yes \
+              miki@srv1.mikitatek.ro deploy
