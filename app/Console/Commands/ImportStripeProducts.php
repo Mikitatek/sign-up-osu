@@ -47,22 +47,24 @@ class ImportStripeProducts extends Command
             $options = isset($metadata['options']) ? json_decode($metadata['options'], true) : null;
             $oneOption = isset($metadata['oneoption']) ? json_decode($metadata['oneoption'], true) : null;
 
-            $product = Product::updateOrCreate(
-                ['name' => $sp->name],
-                [
-                    'description' => $sp->description,
-                    'category' => $metadata['category'] ?? 'Altele',
-                    'image' => $sp->images[0] ?? null,
-                    'price' => $base->unit_amount,
-                    'price_with_muschi' => $withMuschi?->unit_amount,
-                    'options' => $options ?: null,
-                    'one_option' => $oneOption ?: null,
-                    'is_active' => true,
-                ]
-            );
+            $product = Product::firstOrNew(['name' => $sp->name]);
+            $product->fill([
+                'description' => $sp->description,
+                'category' => $metadata['category'] ?? 'Altele',
+                'image' => $sp->images[0] ?? null,
+                'price' => $base->unit_amount,
+                'price_with_muschi' => $withMuschi?->unit_amount,
+                'options' => $options ?: null,
+                'one_option' => $oneOption ?: null,
+                'is_active' => true,
+            ]);
+            // `slug` is NOT NULL with no DB default, so it must be set before the
+            // initial insert (a strict SQL mode rejects the row otherwise). Keep
+            // the existing slug on updates so product URLs stay stable.
             if (! $product->slug) {
-                $product->update(['slug' => Product::uniqueSlug($product->name, $product->id)]);
+                $product->slug = Product::uniqueSlug($product->name, $product->id);
             }
+            $product->save();
             $imported[] = $product->id;
             $this->line("  ✓ {$sp->name} — ".number_format($base->unit_amount / 100, 2).' lei'
                 .($withMuschi ? ' / cu mușchi '.number_format($withMuschi->unit_amount / 100, 2).' lei' : ''));
