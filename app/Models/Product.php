@@ -61,6 +61,7 @@ class Product extends Model
             'category' => $this->category,
             'metadata' => array_filter([
                 'category' => $this->category,
+                'gramaj' => $this->gramaj,
                 'options' => $this->options ? json_encode($this->options) : null,
                 'oneoption' => $this->one_option ? json_encode($this->one_option) : null,
             ]),

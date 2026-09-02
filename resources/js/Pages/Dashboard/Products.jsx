@@ -20,6 +20,7 @@ const csrf = () =>
 const emptyForm = {
     name: "",
     description: "",
+    gramaj: "",
     category: "",
     price_lei: "",
     price_with_muschi_lei: "",
@@ -64,6 +65,7 @@ export default function Products({ products, categories }) {
         setData({
             name: product.name,
             description: product.description ?? "",
+            gramaj: product.gramaj ?? "",
             category: product.category,
             price_lei: (product.price / 100).toFixed(2),
             price_with_muschi_lei: product.price_with_muschi
@@ -147,9 +149,9 @@ export default function Products({ products, categories }) {
                             {products.length === 0 ? (
                                 <p className="text-gray-500">
                                     Niciun produs încă. Adaugă primul produs sau
-                                    rulează importul din Stripe:{" "}
+                                    importă meniul de pe Wolt:{" "}
                                     <code className="rounded bg-gray-100 px-1">
-                                        php artisan products:import-stripe
+                                        php artisan menu:import-wolt
                                     </code>
                                 </p>
                             ) : (
@@ -162,6 +164,9 @@ export default function Products({ products, categories }) {
                                                 </th>
                                                 <th className="px-3 py-2 text-left">
                                                     Categorie
+                                                </th>
+                                                <th className="px-3 py-2 text-left">
+                                                    Gramaj
                                                 </th>
                                                 <th className="px-3 py-2 text-right">
                                                     Preț (lei)
@@ -210,6 +215,9 @@ export default function Products({ products, categories }) {
                                                     </td>
                                                     <td className="px-3 py-2">
                                                         {product.category}
+                                                    </td>
+                                                    <td className="px-3 py-2 text-gray-600">
+                                                        {product.gramaj || "—"}
                                                     </td>
                                                     <td className="px-3 py-2 text-right font-semibold">
                                                         {fmtLei(product.price)}
@@ -367,7 +375,7 @@ export default function Products({ products, categories }) {
                         </Field>
                     </div>
 
-                    <div className="mt-4">
+                    <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_10rem]">
                         <Field label="Descriere" error={errors.description}>
                             <textarea
                                 rows={3}
@@ -375,6 +383,21 @@ export default function Products({ products, categories }) {
                                 onChange={(e) =>
                                     setData("description", e.target.value)
                                 }
+                                className="w-full rounded-md border-gray-300 text-sm"
+                            />
+                        </Field>
+
+                        <Field
+                            label="Gramaj (opțional)"
+                            error={errors.gramaj}
+                        >
+                            <input
+                                type="text"
+                                value={data.gramaj}
+                                onChange={(e) =>
+                                    setData("gramaj", e.target.value)
+                                }
+                                placeholder="200 g"
                                 className="w-full rounded-md border-gray-300 text-sm"
                             />
                         </Field>

@@ -1336,9 +1336,14 @@ export default function ShopPage() {
                         <h3 className="text-2xl font-bold mb-2">
                             {selectedProduct.name}
                         </h3>
-                        <p className="text-gray-700 text-sm mb-4">
+                        <p className="text-gray-700 text-sm mb-1">
                             {selectedProduct.description}
                         </p>
+                        {selectedProduct.metadata?.gramaj && (
+                            <p className="text-gray-500 text-sm italic mb-4">
+                                {selectedProduct.metadata.gramaj}
+                            </p>
+                        )}
 
                         {selectedProduct.options &&
                             selectedProduct.options.length > 0 && (

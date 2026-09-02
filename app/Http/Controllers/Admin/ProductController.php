@@ -19,8 +19,10 @@ class ProductController extends Controller
                 'name' => $p->name,
                 'slug' => $p->slug,
                 'description' => $p->description,
+                'gramaj' => $p->gramaj,
                 'category' => $p->category,
                 'image' => $p->image,
+                'source' => $p->source,
                 'price' => $p->price,
                 'price_with_muschi' => $p->price_with_muschi,
                 'options' => $p->options ?? [],
@@ -83,6 +85,7 @@ class ProductController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:2000',
+            'gramaj' => 'nullable|string|max:50',
             'category' => 'required|string|max:100',
             'price_lei' => 'required|numeric|min:0.01|max:100000',
             'price_with_muschi_lei' => 'nullable|numeric|min:0.01|max:100000',
@@ -97,6 +100,7 @@ class ProductController extends Controller
         return [
             'name' => $data['name'],
             'description' => $data['description'] ?? null,
+            'gramaj' => $data['gramaj'] ?? null,
             'category' => $data['category'],
             'price' => (int) round($data['price_lei'] * 100),
             'price_with_muschi' => isset($data['price_with_muschi_lei']) && $data['price_with_muschi_lei'] !== null
