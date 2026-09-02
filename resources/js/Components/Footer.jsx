@@ -73,8 +73,8 @@ export default function Footer() {
                         <a href="mailto:contact@batranu-osu.ro">
                             <li className="mb-2">contact@batranu-osu.ro</li>
                         </a>
-                        <a href="tel:+40759673848">
-                            <li className="mb-2">0759 673 848</li>
+                        <a href="tel:+40723758663">
+                            <li className="mb-2">0723 758 663</li>
                         </a>
                     </ul>
                 </div>

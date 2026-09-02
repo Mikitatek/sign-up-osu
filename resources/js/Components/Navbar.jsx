@@ -123,13 +123,13 @@ export default function Navbar({ totalItemCount, subtotal, setIsCartOpen }) {
 
                 {/* Bară contact desktop */}
                 <div className="hidden md:block w-full bg-red-500 text-white text-center py-1 text-sm font-bold">
-                    Comenzi telefonice: 0759 673 848
+                    Comenzi telefonice: 0723 758 663
                 </div>
                 {/* Bară contact mobil */}
-                <a href="tel:+40759673848">
+                <a href="tel:+40723758663">
                     <div className="block md:hidden bg-red-500 sticky top-[75px] z-40 px-4 py-1 text-center font-bold">
                         <h2 className="text-sm text-white md:text-md">
-                            Comenzi telefonice: 0759 673 848
+                            Comenzi telefonice: 0723 758 663
                         </h2>
                     </div>
                 </a>

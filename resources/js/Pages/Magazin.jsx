@@ -1047,7 +1047,7 @@ export default function ShopPage() {
                                             Comenzi telefonice
                                         </p>
                                         <p className="text-sm text-gray-700">
-                                            0759 673 848
+                                            0723 758 663
                                         </p>
                                     </div>
                                 </div>

@@ -57,7 +57,7 @@
         "name": "Bătrânul Osu",
         "image": "https://www.batranul-osu.ro/images/og-image.jpg",
         "url": "https://www.batranul-osu.ro/",
-        "telephone": "+40759673848",
+        "telephone": "+40723758663",
         "address": {
             "@type": "PostalAddress",
             "streetAddress": "Strada Egretei nr.1",
