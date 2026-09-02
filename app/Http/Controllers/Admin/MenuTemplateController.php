@@ -62,6 +62,32 @@ class MenuTemplateController extends Controller
         );
     }
 
+    /** JSON preview of a template's products, for the dashboard modal. */
+    public function show(MenuTemplate $menuTemplate)
+    {
+        $rows = collect($menuTemplate->payload)
+            ->map(fn ($r) => [
+                'name' => $r['name'] ?? '',
+                'category' => $r['category'] ?? '',
+                'gramaj' => $r['gramaj'] ?? null,
+                'price' => $r['price'] ?? 0,
+                'price_with_muschi' => $r['price_with_muschi'] ?? null,
+                'is_active' => (bool) ($r['is_active'] ?? false),
+                'is_limited_edition' => (bool) ($r['is_limited_edition'] ?? false),
+                'sort_order' => (int) ($r['sort_order'] ?? 0),
+            ])
+            ->sortBy([['sort_order', 'asc'], ['name', 'asc']])
+            ->values();
+
+        return response()->json([
+            'id' => $menuTemplate->id,
+            'name' => $menuTemplate->name,
+            'created_at' => $menuTemplate->created_at->format('d.m.Y H:i'),
+            'product_count' => $menuTemplate->product_count,
+            'products' => $rows,
+        ]);
+    }
+
     public function destroy(MenuTemplate $menuTemplate)
     {
         $menuTemplate->delete();

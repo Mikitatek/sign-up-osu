@@ -50,6 +50,7 @@ export default function Products({ products, categories, templates = [] }) {
     const [toggling, setToggling] = useState(null);
     const [importing, setImporting] = useState(false);
     const [showTemplates, setShowTemplates] = useState(false);
+    const [preview, setPreview] = useState(null); // { meta, state, data }
     const [activeMap, setActiveMap] = useState(
         Object.fromEntries(products.map((p) => [p.id, p.is_active])),
     );
@@ -177,6 +178,20 @@ export default function Products({ products, categories, templates = [] }) {
         }
     };
 
+    const openPreview = async (t) => {
+        setPreview({ meta: t, state: "loading", data: null });
+        try {
+            const res = await fetch(
+                route("dashboard.menu-templates.show", t.id),
+                { headers: { Accept: "application/json" } },
+            );
+            if (!res.ok) throw new Error();
+            setPreview({ meta: t, state: "ready", data: await res.json() });
+        } catch {
+            setPreview({ meta: t, state: "error", data: null });
+        }
+    };
+
     const renumber = () => {
         if (
             window.confirm(
@@ -293,6 +308,14 @@ export default function Products({ products, categories, templates = [] }) {
                                                     </span>
                                                 </span>
                                                 <span className="whitespace-nowrap">
+                                                    <button
+                                                        onClick={() =>
+                                                            openPreview(t)
+                                                        }
+                                                        className="mr-3 font-semibold text-gray-700 hover:underline"
+                                                    >
+                                                        👁 Vezi
+                                                    </button>
                                                     <button
                                                         onClick={() =>
                                                             restoreTemplate(t)
@@ -699,6 +722,119 @@ export default function Products({ products, categories, templates = [] }) {
                         </PrimaryButton>
                     </div>
                 </form>
+            </Modal>
+
+            <Modal
+                show={preview !== null}
+                onClose={() => setPreview(null)}
+                maxWidth="2xl"
+            >
+                {preview && (
+                    <div className="p-6">
+                        <h2 className="text-lg font-bold text-gray-800">
+                            {preview.meta.name}
+                        </h2>
+                        <p className="mb-4 text-xs text-gray-500">
+                            {preview.meta.created_at} ·{" "}
+                            {preview.meta.product_count} produse —
+                            previzualizare, nu s-a modificat nimic
+                        </p>
+
+                        {preview.state === "loading" && (
+                            <p className="py-8 text-center text-sm text-gray-500">
+                                Se încarcă…
+                            </p>
+                        )}
+                        {preview.state === "error" && (
+                            <p className="py-8 text-center text-sm text-red-600">
+                                Nu am putut încărca meniul.
+                            </p>
+                        )}
+
+                        {preview.state === "ready" && (
+                            <div className="max-h-[60vh] overflow-auto rounded border border-gray-100">
+                                <table className="min-w-full text-xs">
+                                    <thead className="sticky top-0 bg-gray-100">
+                                        <tr>
+                                            <th className="px-2 py-1.5 text-left">
+                                                Produs
+                                            </th>
+                                            <th className="px-2 py-1.5 text-left">
+                                                Categorie
+                                            </th>
+                                            <th className="px-2 py-1.5 text-left">
+                                                Gramaj
+                                            </th>
+                                            <th className="px-2 py-1.5 text-right">
+                                                Preț
+                                            </th>
+                                            <th className="px-2 py-1.5 text-center">
+                                                Activ
+                                            </th>
+                                            <th className="px-2 py-1.5 text-right">
+                                                Ord.
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {preview.data.products.map((p, i) => (
+                                            <tr
+                                                key={i}
+                                                className={`border-b border-gray-100 ${
+                                                    p.is_active
+                                                        ? ""
+                                                        : "text-gray-400"
+                                                }`}
+                                            >
+                                                <td className="px-2 py-1.5">
+                                                    {p.name}
+                                                    {p.is_limited_edition && (
+                                                        <span className="ml-1 rounded bg-amber-100 px-1 py-0.5 text-[9px] font-semibold uppercase text-amber-800">
+                                                            EL
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="px-2 py-1.5">
+                                                    {p.category}
+                                                </td>
+                                                <td className="px-2 py-1.5">
+                                                    {p.gramaj || "—"}
+                                                </td>
+                                                <td className="px-2 py-1.5 text-right">
+                                                    {fmtLei(p.price)}
+                                                </td>
+                                                <td className="px-2 py-1.5 text-center">
+                                                    {p.is_active ? "✓" : "—"}
+                                                </td>
+                                                <td className="px-2 py-1.5 text-right">
+                                                    {p.sort_order}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+
+                        <div className="mt-6 flex justify-end gap-3">
+                            <SecondaryButton
+                                type="button"
+                                onClick={() => setPreview(null)}
+                            >
+                                Închide
+                            </SecondaryButton>
+                            <PrimaryButton
+                                onClick={() => {
+                                    const t = preview.meta;
+                                    setPreview(null);
+                                    restoreTemplate(t);
+                                }}
+                            >
+                                Restaurează acest meniu
+                            </PrimaryButton>
+                        </div>
+                    </div>
+                )}
             </Modal>
         </AuthenticatedLayout>
     );

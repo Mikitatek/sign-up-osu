@@ -117,6 +117,7 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 
     // Meniuri salvate ca template (backup / restore catalog)
     Route::post('/dashboard/menu-templates', [MenuTemplateController::class, 'store'])->name('dashboard.menu-templates.store');
+    Route::get('/dashboard/menu-templates/{menuTemplate}', [MenuTemplateController::class, 'show'])->name('dashboard.menu-templates.show');
     Route::post('/dashboard/menu-templates/{menuTemplate}/restore', [MenuTemplateController::class, 'restore'])
         ->middleware('throttle:10,1')
         ->name('dashboard.menu-templates.restore');
