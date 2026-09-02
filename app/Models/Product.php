@@ -15,6 +15,7 @@ class Product extends Model
             'options' => 'array',
             'one_option' => 'array',
             'is_active' => 'boolean',
+            'is_limited_edition' => 'boolean',
             'price' => 'integer',
             'price_with_muschi' => 'integer',
         ];
@@ -59,6 +60,7 @@ class Product extends Model
             'prices' => $prices,
             'image' => $this->image ?: '/images/default.jpg',
             'category' => $this->category,
+            'is_limited_edition' => (bool) $this->is_limited_edition,
             'metadata' => array_filter([
                 'category' => $this->category,
                 'gramaj' => $this->gramaj,

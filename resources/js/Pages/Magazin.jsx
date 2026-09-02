@@ -328,8 +328,10 @@ export default function ShopPage() {
         }, 300); // durata animatiei
     };
 
+    const LIMITED_EDITION_GROUP = "Ediție Limitată";
+
     const categoryOrder = [
-        "Ediție Limitată",
+        LIMITED_EDITION_GROUP,
         "Produse de Post",
         "Langos",
         "Kurtos Umplut",
@@ -337,9 +339,16 @@ export default function ShopPage() {
         "Băuturi",
     ];
 
-    // Grupează produsele pe categorii
+    const isLimitedEdition = (product) =>
+        product.is_limited_edition === true ||
+        /edi[țt]ie limitat/i.test(product.category || "");
+
+    // Grupează produsele pe categorii — cele marcate „ediție limitată" merg
+    // într-o secțiune proprie, indiferent de categoria lor reală.
     const grouped = products.reduce((acc, product) => {
-        const key = product.category;
+        const key = isLimitedEdition(product)
+            ? LIMITED_EDITION_GROUP
+            : product.category;
         if (!acc[key]) acc[key] = [];
         acc[key].push(product);
         return acc;

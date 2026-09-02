@@ -27,6 +27,7 @@ const emptyForm = {
     options_text: "",
     one_option_text: "",
     is_active: true,
+    is_limited_edition: false,
     sort_order: 0,
     image: null,
 };
@@ -49,7 +50,7 @@ export default function Products({ products, categories }) {
     const [toggling, setToggling] = useState(null);
     const [importing, setImporting] = useState(false);
     const [activeMap, setActiveMap] = useState(
-        Object.fromEntries(products.map((p) => [p.id, p.is_active]))
+        Object.fromEntries(products.map((p) => [p.id, p.is_active])),
     );
 
     const { data, setData, post, processing, errors, reset, clearErrors } =
@@ -76,6 +77,7 @@ export default function Products({ products, categories }) {
             options_text: (product.options ?? []).join("\n"),
             one_option_text: (product.one_option ?? []).join("\n"),
             is_active: product.is_active,
+            is_limited_edition: product.is_limited_edition ?? false,
             sort_order: product.sort_order,
             image: null,
         });
@@ -107,7 +109,7 @@ export default function Products({ products, categories }) {
                         "X-CSRF-TOKEN": csrf(),
                     },
                     body: JSON.stringify({ is_active: next }),
-                }
+                },
             );
             if (res.ok) {
                 setActiveMap((m) => ({ ...m, [product.id]: next }));
@@ -120,7 +122,7 @@ export default function Products({ products, categories }) {
     const importWolt = () => {
         if (
             !window.confirm(
-                "Import meniul de pe Wolt acum?\n\nSe actualizează produsele existente, se adaugă cele noi și se dezactivează ce nu mai e pe Wolt. Poate dura până la un minut."
+                "Import meniul de pe Wolt acum?\n\nSe actualizează produsele existente, se adaugă cele noi și se dezactivează ce nu mai e pe Wolt. Poate dura până la un minut.",
             )
         ) {
             return;
@@ -132,14 +134,14 @@ export default function Products({ products, categories }) {
             {
                 preserveScroll: true,
                 onFinish: () => setImporting(false),
-            }
+            },
         );
     };
 
     const handleDelete = (product) => {
         if (
             window.confirm(
-                `Ștergi definitiv produsul „${product.name}”? Va dispărea din magazin.`
+                `Ștergi definitiv produsul „${product.name}”? Va dispărea din magazin.`,
             )
         ) {
             router.delete(route("dashboard.products.destroy", product.id), {
@@ -251,6 +253,12 @@ export default function Products({ products, categories }) {
                                                             />
                                                             <span className="font-medium">
                                                                 {product.name}
+                                                                {product.is_limited_edition && (
+                                                                    <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
+                                                                        Ediție
+                                                                        limitată
+                                                                    </span>
+                                                                )}
                                                             </span>
                                                         </div>
                                                     </td>
@@ -265,7 +273,7 @@ export default function Products({ products, categories }) {
                                                     </td>
                                                     <td className="px-3 py-2 text-right">
                                                         {fmtLei(
-                                                            product.price_with_muschi
+                                                            product.price_with_muschi,
                                                         )}
                                                     </td>
                                                     <td className="px-3 py-2 text-center text-gray-500">
@@ -283,7 +291,7 @@ export default function Products({ products, categories }) {
                                                         <button
                                                             onClick={() =>
                                                                 toggleActive(
-                                                                    product
+                                                                    product,
                                                                 )
                                                             }
                                                             disabled={
@@ -314,7 +322,7 @@ export default function Products({ products, categories }) {
                                                         <button
                                                             onClick={() =>
                                                                 openEdit(
-                                                                    product
+                                                                    product,
                                                                 )
                                                             }
                                                             className="mr-3 font-semibold text-blue-700 hover:underline"
@@ -324,7 +332,7 @@ export default function Products({ products, categories }) {
                                                         <button
                                                             onClick={() =>
                                                                 handleDelete(
-                                                                    product
+                                                                    product,
                                                                 )
                                                             }
                                                             className="font-bold text-red-600 hover:text-red-800"
@@ -408,7 +416,7 @@ export default function Products({ products, categories }) {
                                 onChange={(e) =>
                                     setData(
                                         "price_with_muschi_lei",
-                                        e.target.value
+                                        e.target.value,
                                     )
                                 }
                                 className="w-full rounded-md border-gray-300 text-sm"
@@ -428,10 +436,7 @@ export default function Products({ products, categories }) {
                             />
                         </Field>
 
-                        <Field
-                            label="Gramaj (opțional)"
-                            error={errors.gramaj}
-                        >
+                        <Field label="Gramaj (opțional)" error={errors.gramaj}>
                             <input
                                 type="text"
                                 value={data.gramaj}
@@ -514,17 +519,33 @@ export default function Products({ products, categories }) {
                             />
                         </Field>
 
-                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                            <input
-                                type="checkbox"
-                                checked={data.is_active}
-                                onChange={(e) =>
-                                    setData("is_active", e.target.checked)
-                                }
-                                className="rounded border-gray-300"
-                            />
-                            Activ în magazin
-                        </label>
+                        <div className="space-y-2">
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                                <input
+                                    type="checkbox"
+                                    checked={data.is_active}
+                                    onChange={(e) =>
+                                        setData("is_active", e.target.checked)
+                                    }
+                                    className="rounded border-gray-300"
+                                />
+                                Activ în magazin
+                            </label>
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                                <input
+                                    type="checkbox"
+                                    checked={data.is_limited_edition}
+                                    onChange={(e) =>
+                                        setData(
+                                            "is_limited_edition",
+                                            e.target.checked,
+                                        )
+                                    }
+                                    className="rounded border-gray-300"
+                                />
+                                Ediție limitată (secțiune separată, sus de tot)
+                            </label>
+                        </div>
                     </div>
 
                     <div className="mt-6 flex justify-end gap-3">

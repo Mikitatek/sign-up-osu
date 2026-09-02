@@ -29,6 +29,7 @@ class ProductController extends Controller
                 'options' => $p->options ?? [],
                 'one_option' => $p->one_option ?? [],
                 'is_active' => $p->is_active,
+                'is_limited_edition' => $p->is_limited_edition,
                 'sort_order' => $p->sort_order,
             ]);
 
@@ -119,6 +120,7 @@ class ProductController extends Controller
             'options_text' => 'nullable|string|max:2000',
             'one_option_text' => 'nullable|string|max:2000',
             'is_active' => 'required|boolean',
+            'is_limited_edition' => 'nullable|boolean',
             'sort_order' => 'nullable|integer|min:0|max:100000',
         ]);
 
@@ -136,6 +138,7 @@ class ProductController extends Controller
             'options' => $lines($data['options_text'] ?? null) ?: null,
             'one_option' => $lines($data['one_option_text'] ?? null) ?: null,
             'is_active' => (bool) $data['is_active'],
+            'is_limited_edition' => (bool) ($data['is_limited_edition'] ?? false),
             'sort_order' => $data['sort_order'] ?? 0,
         ];
     }
