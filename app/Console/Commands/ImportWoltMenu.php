@@ -26,6 +26,31 @@ class ImportWoltMenu extends Command
         'EDIȚIE LIMITATĂ' => 'Ediție limitată',
     ];
 
+    /**
+     * By-eye portion sizes for items Wolt lists without a weight. Only used when
+     * the product has no gramaj yet — a value set in the CRM always wins.
+     * Keys are lower-cased names. Keep in sync with the backfill migration.
+     */
+    private const GRAMAJ_FALLBACK = [
+        'langos simplu' => '170 g',
+        'langos smântână' => '200 g',
+        'langos nutella' => '210 g',
+        'langos dulceață' => '210 g',
+        'langos gem' => '210 g',
+        'langos cașcaval' => '240 g',
+        'langos telemea cu mărar' => '240 g',
+        'langos telemea și mărar' => '240 g',
+        'langos papanaș' => '270 g',
+        'langos țărănesc' => '320 g',
+        'langos italian' => '310 g',
+        'espresso scurt' => '30 ml',
+        'espresso lung' => '50 ml',
+        'espresso dublu' => '60 ml',
+        'latte' => '250 ml',
+        'ceai' => '300 ml',
+        'ciocolată caldă cu bezele la jar' => '250 ml',
+    ];
+
     public function handle(): int
     {
         $url = $this->argument('url') ?: self::DEFAULT_URL;
@@ -73,7 +98,7 @@ class ImportWoltMenu extends Command
             }
             $seen[$key] = true;
 
-            [$gramaj, $description] = $this->splitGramaj($item['description'] ?? '');
+            [$woltGramaj, $description] = $this->splitGramaj($item['description'] ?? '');
             $price = (int) ($item['price'] ?? 0);
             $category = $categoryOf[$item['id']] ?? 'Altele';
             $woltImage = $item['images'][0]['url'] ?? null;
@@ -84,10 +109,18 @@ class ImportWoltMenu extends Command
 
             $isNew = ! $product->exists;
 
-            // Keep a hand-uploaded image; only (re)set it from Wolt when there
-            // isn't one yet or the current one was itself pulled from Wolt.
+            // Wolt's weight wins when it has one; otherwise keep what's already
+            // on the product (a CRM edit or an earlier estimate), then fall back
+            // to the by-eye table.
+            $gramaj = $woltGramaj
+                ?: ($product->gramaj ?: (self::GRAMAJ_FALLBACK[$key] ?? null));
+
+            // Only a genuine CRM upload (a local /uploads/products file that
+            // isn't one of our Wolt copies) is protected; Stripe or Wolt-CDN
+            // URLs get replaced by a freshly downloaded local image.
             $keepImage = $product->image
-                && ! Str::contains($product->image, 'wolt.com')
+                && Str::startsWith($product->image, '/'.self::IMAGE_DIR.'/')
+                && ! Str::startsWith($product->image, '/'.self::IMAGE_DIR.'/wolt-')
                 && ! $isNew;
 
             // Local, self-hosted path (deterministic from the Wolt URL, so a
