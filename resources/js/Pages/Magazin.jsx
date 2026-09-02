@@ -339,18 +339,24 @@ export default function ShopPage() {
         "Băuturi",
     ];
 
-    const isLimitedEdition = (product) =>
-        product.is_limited_edition === true ||
-        /edi[țt]ie limitat/i.test(product.category || "");
-
-    // Grupează produsele pe categorii — cele marcate „ediție limitată" merg
-    // într-o secțiune proprie, indiferent de categoria lor reală.
+    // Grupează produsele pe categorii. Un produs marcat „ediție limitată"
+    // apare de două ori: o dată în secțiunea „Ediție Limitată" (sus) și o
+    // dată în categoria lui reală.
     const grouped = products.reduce((acc, product) => {
-        const key = isLimitedEdition(product)
-            ? LIMITED_EDITION_GROUP
-            : product.category;
-        if (!acc[key]) acc[key] = [];
-        acc[key].push(product);
+        const realCat = product.category || "Altele";
+        const catIsLimited = /edi[țt]ie limitat/i.test(realCat);
+        const push = (key) => {
+            if (!acc[key]) acc[key] = [];
+            acc[key].push(product);
+        };
+
+        if (!catIsLimited) {
+            push(realCat);
+        }
+        if (product.is_limited_edition === true || catIsLimited) {
+            push(LIMITED_EDITION_GROUP);
+        }
+
         return acc;
     }, {});
 
