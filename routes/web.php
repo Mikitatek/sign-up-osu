@@ -102,6 +102,9 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 
     // CRM produse (catalog local)
     Route::get('/dashboard/products', [ProductController::class, 'index'])->name('dashboard.products');
+    Route::post('/dashboard/products/import-wolt', [ProductController::class, 'importWolt'])
+        ->middleware('throttle:6,1')
+        ->name('dashboard.products.import-wolt');
     Route::post('/dashboard/products', [ProductController::class, 'store'])->name('dashboard.products.store');
     Route::post('/dashboard/products/{product}', [ProductController::class, 'update'])->name('dashboard.products.update');
     Route::post('/dashboard/products/{product}/toggle', [ProductController::class, 'toggle'])->name('dashboard.products.toggle');

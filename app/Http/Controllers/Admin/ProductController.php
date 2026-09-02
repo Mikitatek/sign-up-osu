@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Inertia\Inertia;
 
 class ProductController extends Controller
@@ -35,6 +36,32 @@ class ProductController extends Controller
             'products' => $products,
             'categories' => Product::select('category')->distinct()->orderBy('category')->pluck('category'),
         ]);
+    }
+
+    /**
+     * Pull the latest menu from Wolt straight from the dashboard. Runs the
+     * `menu:import-wolt` command inline (a few dozen small image downloads,
+     * usually well under a minute) and flashes back its summary.
+     */
+    public function importWolt(Request $request)
+    {
+        @set_time_limit(600);
+        ignore_user_abort(true);
+
+        try {
+            Artisan::call('menu:import-wolt', ['--deactivate-missing' => true]);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->with('error', 'Importul din Wolt a eșuat: '.$e->getMessage());
+        }
+
+        $lines = array_filter(array_map('trim', explode("\n", Artisan::output())));
+        $summary = collect($lines)
+            ->filter(fn ($l) => preg_match('/produse noi,|Dezactivate:|Niciun produs activ|articole în meniul/u', $l))
+            ->implode(' · ');
+
+        return back()->with('success', 'Import Wolt terminat. '.$summary);
     }
 
     public function store(Request $request)

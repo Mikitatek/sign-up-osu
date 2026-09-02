@@ -3,7 +3,7 @@ import PrimaryButton from "@/Components/PrimaryButton";
 import SecondaryButton from "@/Components/SecondaryButton";
 import InputError from "@/Components/InputError";
 import Modal from "@/Components/Modal";
-import { Head, router, useForm } from "@inertiajs/react";
+import { Head, router, useForm, usePage } from "@inertiajs/react";
 import { useState } from "react";
 
 const fmtLei = (bani) =>
@@ -44,8 +44,10 @@ function Field({ label, error, children }) {
 }
 
 export default function Products({ products, categories }) {
+    const { flash } = usePage().props;
     const [editing, setEditing] = useState(null); // null | 'new' | product
     const [toggling, setToggling] = useState(null);
+    const [importing, setImporting] = useState(false);
     const [activeMap, setActiveMap] = useState(
         Object.fromEntries(products.map((p) => [p.id, p.is_active]))
     );
@@ -115,6 +117,25 @@ export default function Products({ products, categories }) {
         }
     };
 
+    const importWolt = () => {
+        if (
+            !window.confirm(
+                "Import meniul de pe Wolt acum?\n\nSe actualizează produsele existente, se adaugă cele noi și se dezactivează ce nu mai e pe Wolt. Poate dura până la un minut."
+            )
+        ) {
+            return;
+        }
+        setImporting(true);
+        router.post(
+            route("dashboard.products.import-wolt"),
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => setImporting(false),
+            }
+        );
+    };
+
     const handleDelete = (product) => {
         if (
             window.confirm(
@@ -134,9 +155,19 @@ export default function Products({ products, categories }) {
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
                         Produse — catalog local
                     </h2>
-                    <PrimaryButton onClick={openCreate}>
-                        + Adaugă produs
-                    </PrimaryButton>
+                    <div className="flex items-center gap-3">
+                        <SecondaryButton
+                            onClick={importWolt}
+                            disabled={importing}
+                        >
+                            {importing
+                                ? "Se importă din Wolt…"
+                                : "⬇ Importă din Wolt"}
+                        </SecondaryButton>
+                        <PrimaryButton onClick={openCreate}>
+                            + Adaugă produs
+                        </PrimaryButton>
+                    </div>
                 </div>
             }
         >
@@ -144,6 +175,16 @@ export default function Products({ products, categories }) {
 
             <div className="py-12">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+                    {flash?.success && (
+                        <div className="mb-4 rounded-md bg-green-50 px-4 py-3 text-sm text-green-800 ring-1 ring-green-200">
+                            {flash.success}
+                        </div>
+                    )}
+                    {flash?.error && (
+                        <div className="mb-4 rounded-md bg-red-50 px-4 py-3 text-sm text-red-800 ring-1 ring-red-200">
+                            {flash.error}
+                        </div>
+                    )}
                     <div className="overflow-hidden bg-white shadow-md sm:rounded-lg">
                         <div className="p-6 text-gray-900">
                             {products.length === 0 ? (

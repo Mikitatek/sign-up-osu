@@ -12,7 +12,10 @@ class ImportWoltMenu extends Command
     protected $signature = 'menu:import-wolt
         {url? : Wolt venue URL (defaults to the Oșu Kürtős și Langoș page)}
         {--dry-run : Show what would change without writing anything}
-        {--deactivate-missing : Hide active products that are no longer on the Wolt menu}';
+        {--deactivate-missing : Hide active products that are no longer on the Wolt menu}
+        {--skip-images : Do not download product images}';
+
+    private const IMAGE_DIR = 'uploads/products';
 
     protected $description = 'Import the menu (items, prices, portion sizes) from a public Wolt venue page into the local products table';
 
@@ -82,10 +85,19 @@ class ImportWoltMenu extends Command
             $isNew = ! $product->exists;
 
             // Keep a hand-uploaded image; only (re)set it from Wolt when there
-            // isn't one yet or the current one also came from Wolt.
+            // isn't one yet or the current one was itself pulled from Wolt.
             $keepImage = $product->image
                 && ! Str::contains($product->image, 'wolt.com')
                 && ! $isNew;
+
+            // Local, self-hosted path (deterministic from the Wolt URL, so a
+            // re-import reuses the already-downloaded file). Wolt's own CDN is
+            // blocked by the site CSP, hence the copy.
+            $targetImage = match (true) {
+                $keepImage => $product->image,
+                (bool) $this->option('skip-images') => $product->image,
+                default => $this->localImagePath($woltImage) ?? $product->image,
+            };
 
             $changes = $this->diff($product, [
                 'name' => $name,
@@ -93,7 +105,7 @@ class ImportWoltMenu extends Command
                 'gramaj' => $gramaj,
                 'category' => $category,
                 'price' => $price,
-                'image' => $keepImage ? $product->image : $woltImage,
+                'image' => $targetImage,
             ]);
 
             if ($isNew) {
@@ -114,8 +126,8 @@ class ImportWoltMenu extends Command
                 $product->source = 'wolt';
                 $product->external_id = $item['id'];
                 $product->is_active = true;
-                if (! $keepImage && $woltImage) {
-                    $product->image = $woltImage;
+                if (! $keepImage && ! $this->option('skip-images') && $woltImage) {
+                    $product->image = $this->downloadImage($woltImage) ?? $product->image;
                 }
                 if (! $product->slug) {
                     $product->slug = Product::uniqueSlug($name, $product->id);
@@ -211,6 +223,51 @@ class ImportWoltMenu extends Command
         $unit = in_array($unit, ['gr', 'grame'], true) ? 'g' : $unit;
 
         return str_replace(',', '.', $number).' '.$unit;
+    }
+
+    /** Deterministic local path a Wolt image URL maps to (no I/O). */
+    private function localImagePath(?string $url): ?string
+    {
+        if (! $url) {
+            return null;
+        }
+
+        return '/'.self::IMAGE_DIR.'/wolt-'.sha1($url).'.jpg';
+    }
+
+    /**
+     * Download a Wolt image into public/uploads/products and return its local
+     * path. Re-uses the file if it was fetched on an earlier run. Returns null
+     * if the download fails so the caller can keep whatever it already had.
+     */
+    private function downloadImage(string $url): ?string
+    {
+        $path = $this->localImagePath($url);
+        $abs = public_path(ltrim($path, '/'));
+
+        if (is_file($abs) && filesize($abs) > 0) {
+            return $path;
+        }
+
+        if (! is_dir(dirname($abs))) {
+            mkdir(dirname($abs), 0755, true);
+        }
+
+        try {
+            $res = Http::timeout(15)->get($url);
+            if (! $res->successful() || ! str_starts_with((string) $res->header('Content-Type'), 'image/')) {
+                $this->warn("  imagine sărită ({$url})");
+
+                return null;
+            }
+            file_put_contents($abs, $res->body());
+        } catch (\Throwable $e) {
+            $this->warn("  imagine eșuată ({$url}): {$e->getMessage()}");
+
+            return null;
+        }
+
+        return $path;
     }
 
     /**
