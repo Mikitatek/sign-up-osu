@@ -69,7 +69,7 @@ export default function Footer() {
                     <h3 className="text-white font-semibold mb-4">Contact</h3>
                     <ul>
                         <li className="mb-2">Str. Egretei Nr.1, Brașov</li>
-                        <li className="mb-2">L-D: 10:00–22:00</li>
+                        <li className="mb-2">L-D: 10:00–24:00</li>
                         <a href="mailto:contact@batranu-osu.ro">
                             <li className="mb-2">contact@batranu-osu.ro</li>
                         </a>
