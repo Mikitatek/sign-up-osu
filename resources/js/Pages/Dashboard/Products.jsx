@@ -44,11 +44,12 @@ function Field({ label, error, children }) {
     );
 }
 
-export default function Products({ products, categories }) {
+export default function Products({ products, categories, templates = [] }) {
     const { flash } = usePage().props;
     const [editing, setEditing] = useState(null); // null | 'new' | product
     const [toggling, setToggling] = useState(null);
     const [importing, setImporting] = useState(false);
+    const [showTemplates, setShowTemplates] = useState(false);
     const [activeMap, setActiveMap] = useState(
         Object.fromEntries(products.map((p) => [p.id, p.is_active])),
     );
@@ -138,6 +139,59 @@ export default function Products({ products, categories }) {
         );
     };
 
+    const saveTemplate = () => {
+        const name = window.prompt(
+            "Nume pentru acest meniu salvat:",
+            "Meniu " + new Date().toLocaleDateString("ro-RO"),
+        );
+        if (name === null) return;
+        router.post(
+            route("dashboard.menu-templates.store"),
+            { name },
+            { preserveScroll: true },
+        );
+    };
+
+    const restoreTemplate = (t) => {
+        if (
+            !window.confirm(
+                `Restaurezi meniul „${t.name}” (${t.product_count} produse)?\n\n` +
+                    "Produsele din template se suprascriu după slug, iar cele care nu sunt în template devin inactive. " +
+                    "Meniul curent se salvează automat ca backup înainte de restaurare.",
+            )
+        ) {
+            return;
+        }
+        router.post(
+            route("dashboard.menu-templates.restore", t.id),
+            {},
+            { preserveScroll: true },
+        );
+    };
+
+    const deleteTemplate = (t) => {
+        if (window.confirm(`Ștergi template-ul „${t.name}”?`)) {
+            router.delete(route("dashboard.menu-templates.destroy", t.id), {
+                preserveScroll: true,
+            });
+        }
+    };
+
+    const renumber = () => {
+        if (
+            window.confirm(
+                "Renumerotez ordinea tuturor produselor ca 10, 20, 30 …?\n\n" +
+                    "Ordinea rămâne aceeași, dar rămân goluri ca să poți insera ușor produse între ele.",
+            )
+        ) {
+            router.post(
+                route("dashboard.products.renumber"),
+                {},
+                { preserveScroll: true },
+            );
+        }
+    };
+
     const handleDelete = (product) => {
         if (
             window.confirm(
@@ -187,6 +241,82 @@ export default function Products({ products, categories }) {
                             {flash.error}
                         </div>
                     )}
+
+                    <div className="mb-4 rounded-lg bg-white p-4 shadow-md">
+                        <div className="flex items-center justify-between">
+                            <button
+                                type="button"
+                                onClick={() => setShowTemplates((v) => !v)}
+                                className="text-sm font-semibold text-gray-800"
+                            >
+                                {showTemplates ? "▾" : "▸"} Meniuri salvate (
+                                {templates.length})
+                            </button>
+                            <div className="flex gap-2">
+                                <SecondaryButton onClick={renumber}>
+                                    ↕ Renumerotează ordinea
+                                </SecondaryButton>
+                                <SecondaryButton onClick={saveTemplate}>
+                                    💾 Salvează meniul curent
+                                </SecondaryButton>
+                            </div>
+                        </div>
+
+                        {showTemplates && (
+                            <div className="mt-3 border-t border-gray-100 pt-3">
+                                {templates.length === 0 ? (
+                                    <p className="text-sm text-gray-500">
+                                        Niciun meniu salvat. Apasă „Salvează
+                                        meniul curent" ca să faci un punct de
+                                        restaurare.
+                                    </p>
+                                ) : (
+                                    <ul className="divide-y divide-gray-100">
+                                        {templates.map((t) => (
+                                            <li
+                                                key={t.id}
+                                                className="flex items-center justify-between py-2 text-sm"
+                                            >
+                                                <span>
+                                                    <span className="font-medium">
+                                                        {t.name}
+                                                    </span>
+                                                    {t.auto && (
+                                                        <span className="ml-2 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-gray-500">
+                                                            auto-backup
+                                                        </span>
+                                                    )}
+                                                    <span className="ml-2 text-gray-400">
+                                                        {t.created_at} ·{" "}
+                                                        {t.product_count}{" "}
+                                                        produse
+                                                    </span>
+                                                </span>
+                                                <span className="whitespace-nowrap">
+                                                    <button
+                                                        onClick={() =>
+                                                            restoreTemplate(t)
+                                                        }
+                                                        className="mr-3 font-semibold text-blue-700 hover:underline"
+                                                    >
+                                                        Restaurează
+                                                    </button>
+                                                    <button
+                                                        onClick={() =>
+                                                            deleteTemplate(t)
+                                                        }
+                                                        className="font-bold text-red-600 hover:text-red-800"
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                        )}
+                    </div>
                     <div className="overflow-hidden bg-white shadow-md sm:rounded-lg">
                         <div className="p-6 text-gray-900">
                             {products.length === 0 ? (
@@ -517,6 +647,11 @@ export default function Products({ products, categories }) {
                                 }
                                 className="w-full rounded-md border-gray-300 text-sm"
                             />
+                            <span className="mt-1 block text-xs text-gray-500">
+                                Mai mic = mai sus. Dacă numărul e deja folosit,
+                                restul produselor se împing automat în jos — nu
+                                trebuie să le renumerotezi manual.
+                            </span>
                         </Field>
 
                         <div className="space-y-2">

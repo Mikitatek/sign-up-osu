@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\JeReportController;
+use App\Http\Controllers\Admin\MenuTemplateController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\LegalController;
@@ -108,10 +109,18 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::post('/dashboard/products/import-wolt', [ProductController::class, 'importWolt'])
         ->middleware('throttle:6,1')
         ->name('dashboard.products.import-wolt');
+    Route::post('/dashboard/products/renumber', [ProductController::class, 'renumber'])->name('dashboard.products.renumber');
     Route::post('/dashboard/products', [ProductController::class, 'store'])->name('dashboard.products.store');
     Route::post('/dashboard/products/{product}', [ProductController::class, 'update'])->name('dashboard.products.update');
     Route::post('/dashboard/products/{product}/toggle', [ProductController::class, 'toggle'])->name('dashboard.products.toggle');
     Route::delete('/dashboard/products/{product}', [ProductController::class, 'destroy'])->name('dashboard.products.destroy');
+
+    // Meniuri salvate ca template (backup / restore catalog)
+    Route::post('/dashboard/menu-templates', [MenuTemplateController::class, 'store'])->name('dashboard.menu-templates.store');
+    Route::post('/dashboard/menu-templates/{menuTemplate}/restore', [MenuTemplateController::class, 'restore'])
+        ->middleware('throttle:10,1')
+        ->name('dashboard.menu-templates.restore');
+    Route::delete('/dashboard/menu-templates/{menuTemplate}', [MenuTemplateController::class, 'destroy'])->name('dashboard.menu-templates.destroy');
 
     // Rapoarte jurnal electronic AMEF (.je)
     Route::get('/dashboard/je-reports', [JeReportController::class, 'index'])->name('dashboard.je-reports.index');

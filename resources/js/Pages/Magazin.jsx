@@ -1140,7 +1140,11 @@ export default function ShopPage() {
                                     <div className="grid grid-cols-1 sm:grid-cols-1 gap-0 mx-2">
                                         {items
                                             .slice()
-                                            .reverse()
+                                            .sort(
+                                                (a, b) =>
+                                                    (a.sort_order ?? 0) -
+                                                    (b.sort_order ?? 0),
+                                            )
                                             .map((product) => {
                                                 let displayPrice =
                                                     product.price;

@@ -61,6 +61,7 @@ class Product extends Model
             'image' => $this->image ?: '/images/default.jpg',
             'category' => $this->category,
             'is_limited_edition' => (bool) $this->is_limited_edition,
+            'sort_order' => (int) $this->sort_order,
             'metadata' => array_filter([
                 'category' => $this->category,
                 'gramaj' => $this->gramaj,

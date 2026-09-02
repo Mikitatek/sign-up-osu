@@ -36,6 +36,14 @@ class ProductController extends Controller
         return Inertia::render('Dashboard/Products', [
             'products' => $products,
             'categories' => Product::select('category')->distinct()->orderBy('category')->pluck('category'),
+            'templates' => \App\Models\MenuTemplate::orderByDesc('created_at')->get()
+                ->map(fn ($t) => [
+                    'id' => $t->id,
+                    'name' => $t->name,
+                    'auto' => $t->auto,
+                    'product_count' => $t->product_count,
+                    'created_at' => $t->created_at->format('d.m.Y H:i'),
+                ]),
         ]);
     }
 
@@ -71,6 +79,7 @@ class ProductController extends Controller
         $data['slug'] = Product::uniqueSlug($data['name']);
         $data['image'] = $this->storeImage($request);
 
+        $this->makeRoomForSortOrder($data['sort_order']);
         Product::create($data);
 
         return redirect()->route('dashboard.products')->with('success', 'Produs adăugat.');
@@ -87,9 +96,45 @@ class ProductController extends Controller
             $data['image'] = $image;
         }
 
+        if ($data['sort_order'] !== $product->sort_order) {
+            $this->makeRoomForSortOrder($data['sort_order'], $product->id);
+        }
+
         $product->update($data);
 
         return redirect()->route('dashboard.products')->with('success', 'Produs actualizat.');
+    }
+
+    /**
+     * Reassign sort_order as 10, 20, 30 … in the current display order, leaving
+     * gaps so future items can be slotted in between.
+     */
+    public function renumber()
+    {
+        $step = 10;
+        Product::orderBy('sort_order')->orderBy('name')->get()
+            ->each(function (Product $p, int $i) use ($step) {
+                $p->updateQuietly(['sort_order' => ($i + 1) * $step]);
+            });
+
+        return back()->with('success', 'Ordinea produselor a fost renumerotată (10, 20, 30 …).');
+    }
+
+    /**
+     * If another product already sits on this sort_order, shift it and every
+     * product below it down by one so the new value can be inserted cleanly.
+     */
+    private function makeRoomForSortOrder(int $sortOrder, ?int $ignoreId = null): void
+    {
+        $taken = Product::where('sort_order', $sortOrder)
+            ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
+            ->exists();
+
+        if ($taken) {
+            Product::where('sort_order', '>=', $sortOrder)
+                ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
+                ->increment('sort_order');
+        }
     }
 
     public function toggle(Request $request, Product $product)
@@ -139,7 +184,7 @@ class ProductController extends Controller
             'one_option' => $lines($data['one_option_text'] ?? null) ?: null,
             'is_active' => (bool) $data['is_active'],
             'is_limited_edition' => (bool) ($data['is_limited_edition'] ?? false),
-            'sort_order' => $data['sort_order'] ?? 0,
+            'sort_order' => (int) ($data['sort_order'] ?? 0),
         ];
     }
 
