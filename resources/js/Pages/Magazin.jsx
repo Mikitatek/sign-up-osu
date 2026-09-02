@@ -4,6 +4,30 @@ import emailjs from "@emailjs/browser";
 import ReCAPTCHA from "react-google-recaptcha";
 import SiteLayout from "@/Layouts/SiteLayout";
 
+/**
+ * An extra option can carry its own price in the label, e.g.
+ * "extra mușchi (4 lei)" or "extra cașcaval (+3 RON)". Returns the clean
+ * label plus the price in bani (0 when the option has no explicit price).
+ */
+function parseOptionPrice(raw) {
+    const label = String(raw ?? "").trim();
+    const match =
+        label.match(/\(\s*\+?\s*(\d+(?:[.,]\d+)?)\s*(?:lei|ron)?\s*\)\s*$/i) ||
+        label.match(/[+]\s*(\d+(?:[.,]\d+)?)\s*(?:lei|ron)?\s*$/i) ||
+        label.match(/(\d+(?:[.,]\d+)?)\s*(?:lei|ron)\s*$/i);
+    if (!match) return { label, priceBani: 0 };
+    const value = parseFloat(match[1].replace(",", "."));
+    return {
+        label: label.slice(0, match.index).trim() || label,
+        priceBani: Number.isFinite(value) ? Math.round(value * 100) : 0,
+    };
+}
+
+/** Sum of the explicit prices of the currently selected extra options. */
+function extrasTotalBani(options = []) {
+    return options.reduce((sum, o) => sum + parseOptionPrice(o).priceBani, 0);
+}
+
 export default function ShopPage() {
     const [products, setProducts] = useState([]);
     const [selectedProduct, setSelectedProduct] = useState(null);
@@ -342,10 +366,15 @@ export default function ShopPage() {
     const getEffectivePrice = () => {
         if (!selectedProduct) return 0;
 
+        const extras = extrasTotalBani(selectedOptions);
+
+        // The legacy "cu mușchi" price tier only applies to a bare option with
+        // no explicit price of its own (an "extra mușchi (4 lei)" uses the +4).
         const hasMuschi = selectedOptions.some(
             (opt) =>
-                opt.toLowerCase().includes("mușchi") ||
-                opt.toLowerCase().includes("muschi"),
+                (opt.toLowerCase().includes("mușchi") ||
+                    opt.toLowerCase().includes("muschi")) &&
+                parseOptionPrice(opt).priceBani === 0,
         );
 
         if (Array.isArray(selectedProduct.prices)) {
@@ -365,10 +394,12 @@ export default function ShopPage() {
                 (p) => p.unit_amount > 0,
             );
 
-            return selected?.unit_amount ?? fallback?.unit_amount ?? 0;
+            return (
+                (selected?.unit_amount ?? fallback?.unit_amount ?? 0) + extras
+            );
         }
 
-        return selectedProduct.price || 0;
+        return (selectedProduct.price || 0) + extras;
     };
 
     useEffect(() => {
@@ -400,10 +431,13 @@ export default function ShopPage() {
         const optionDesc = options.join(", ");
         const cartKey = `${product.id}-${optionDesc}`;
 
+        const extras = extrasTotalBani(options);
+
         const hasMuschi = options.some(
             (opt) =>
-                opt.toLowerCase().includes("mușchi") ||
-                opt.toLowerCase().includes("muschi"),
+                (opt.toLowerCase().includes("mușchi") ||
+                    opt.toLowerCase().includes("muschi")) &&
+                parseOptionPrice(opt).priceBani === 0,
         );
 
         let basePrice = 0;
@@ -424,6 +458,8 @@ export default function ShopPage() {
         } else {
             basePrice = product.price || 0;
         }
+
+        basePrice += extras;
 
         setCartItems((prev) => {
             const existing = prev.find((item) => item.cartKey === cartKey);
@@ -1390,7 +1426,29 @@ export default function ShopPage() {
                                                             }
                                                         }}
                                                     />
-                                                    <span>{opt}</span>
+                                                    <span>
+                                                        {
+                                                            parseOptionPrice(
+                                                                opt,
+                                                            ).label
+                                                        }
+                                                        {parseOptionPrice(opt)
+                                                            .priceBani > 0 && (
+                                                            <span className="ml-1 text-emerald-800 font-semibold">
+                                                                +
+                                                                {(
+                                                                    parseOptionPrice(
+                                                                        opt,
+                                                                    )
+                                                                        .priceBani /
+                                                                    100
+                                                                ).toFixed(
+                                                                    2,
+                                                                )}{" "}
+                                                                lei
+                                                            </span>
+                                                        )}
+                                                    </span>
                                                 </label>
                                             ),
                                         )}

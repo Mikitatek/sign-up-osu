@@ -455,9 +455,16 @@ export default function Products({ products, categories }) {
                                 onChange={(e) =>
                                     setData("options_text", e.target.value)
                                 }
-                                placeholder={"extra cașcaval\nextra mușchi"}
+                                placeholder={
+                                    "extra cașcaval (3 lei)\nextra mușchi (4 lei)"
+                                }
                                 className="w-full rounded-md border-gray-300 text-sm"
                             />
+                            <span className="mt-1 block text-xs text-gray-500">
+                                Scrie prețul între paranteze, ex.{" "}
+                                <code>extra mușchi (4 lei)</code> — se adaugă la
+                                prețul produsului când e bifat.
+                            </span>
                         </Field>
 
                         <Field
