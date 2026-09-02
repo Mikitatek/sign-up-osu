@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\JeReportController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\LegalController;
 use App\Http\Controllers\MagazinController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\ProfileController;
@@ -21,6 +22,8 @@ Route::post('/newsletter-signup', [NewsletterController::class, 'submitForm'])
     ->name('newsletter.signup');
 
 Route::get('/termeni-si-conditii', [TermsController::class, 'show'])->name('termeni-si-conditii');
+Route::get('/politica-de-confidentialitate', [LegalController::class, 'privacy'])->name('politica-confidentialitate');
+Route::get('/politica-cookies', [LegalController::class, 'cookies'])->name('politica-cookies');
 
 // MAGAZIN PART
 Route::get('/magazin', [MagazinController::class, 'showMagazin'])->name('magazin');

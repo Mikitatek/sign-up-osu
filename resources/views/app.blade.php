@@ -36,19 +36,9 @@
         @vite(['resources/js/app.jsx', "resources/js/Pages/{$page['component']}.jsx"])
         @inertiaHead
 
-        <!-- TikTok Pixel Code Start -->
-        <script>
-        !function (w, d, t) {
-        w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(
-        var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js",o=n&&n.partner;ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=r,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};n=document.createElement("script")
-        ;n.type="text/javascript",n.async=!0,n.src=r+"?sdkid="+e+"&lib="+t;e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(n,e)};
-
-
-        ttq.load('D1HP49JC77U195PQPPNG');
-        ttq.page();
-        }(window, document, 'ttq');
-        </script>
-        <!-- TikTok Pixel Code End -->
+        {{-- Analytics/marketing tags (TikTok Pixel, Google Tag Manager) are loaded
+             from resources/js/lib/consent.js ONLY after the visitor opts in via the
+             cookie banner. Do not add tracking scripts directly here. --}}
 
         <script type="application/ld+json">
         {
@@ -87,13 +77,8 @@
         }
         </script>
 
-    <!-- End Google Tag Manager -->
     </head>
     <body class="font-sans antialiased bg-[url('/resources/assets/cover.png')] bg-cover bg-center h-screen" >
-        <!-- Google Tag Manager (noscript) -->
-        <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PR9QH8QL"
-        height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-        <!-- End Google Tag Manager (noscript) -->
         @inertia
     </body>
 </html>

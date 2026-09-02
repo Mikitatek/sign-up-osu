@@ -9,6 +9,7 @@ export default function Footer() {
                 <div>
                     <img src={logo} alt="Osu Logo" className="mb-4 w-40" />
                     <ul className="text-gray-400 space-y-1">
+                        <li>SC KAMANI S.R.L.</li>
                         <li>CUI: 50260074</li>
                         <li>Nr.Reg.Com: J8/1949/2024</li>
                         <li>
@@ -70,8 +71,8 @@ export default function Footer() {
                     <ul>
                         <li className="mb-2">Str. Egretei Nr.1, Brașov</li>
                         <li className="mb-2">L-D: 10:00–24:00</li>
-                        <a href="mailto:contact@batranu-osu.ro">
-                            <li className="mb-2">contact@batranu-osu.ro</li>
+                        <a href="mailto:batranul-osu@gmail.com">
+                            <li className="mb-2">batranul-osu@gmail.com</li>
                         </a>
                         <a href="tel:+40723758663">
                             <li className="mb-2">0723 758 663</li>
@@ -93,7 +94,7 @@ export default function Footer() {
                     </button>
                     <button
                         onClick={() =>
-                            (window.location.href = "/termeni-si-conditii")
+                            (window.location.href = "/politica-cookies")
                         }
                         className="px-3 py-1 border border-transparent hover:border-gray-300 rounded text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition"
                     >
@@ -101,11 +102,22 @@ export default function Footer() {
                     </button>
                     <button
                         onClick={() =>
-                            (window.location.href = "/termeni-si-conditii")
+                            (window.location.href =
+                                "/politica-de-confidentialitate")
                         }
                         className="px-3 py-1 border border-transparent hover:border-gray-300 rounded text-gray-400 hover:text-gray-900 hover:bg-gray-100  transition"
                     >
                         Politica de confidențialitate
+                    </button>
+                    <button
+                        onClick={() =>
+                            window.dispatchEvent(
+                                new Event("osu:open-cookie-settings")
+                            )
+                        }
+                        className="px-3 py-1 border border-transparent hover:border-gray-300 rounded text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition"
+                    >
+                        Setări cookies
                     </button>
                     <button
                         onClick={() =>

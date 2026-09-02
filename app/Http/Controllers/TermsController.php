@@ -11,10 +11,15 @@ class TermsController extends Controller
     // Display the editor page
     public function edit()
     {
-        // Retrieve the current Terms and Conditions from a file or database
-        $terms = Storage::disk('local')->exists('terms_and_conditions.txt')
-            ? Storage::disk('local')->get('terms_and_conditions.txt')
+        $stored = Storage::disk('local')->exists('terms_and_conditions.txt')
+            ? trim(Storage::disk('local')->get('terms_and_conditions.txt'))
             : '';
+
+        // Seed the editor with the committed default so there's always a base
+        // to work from.
+        $terms = $stored !== ''
+            ? $stored
+            : file_get_contents(resource_path('legal/termeni-si-conditii.html'));
 
         return Inertia::render('Dashboard/TermsEditor', ['terms' => $terms]);
     }
@@ -34,12 +39,16 @@ class TermsController extends Controller
 
     public function show()
     {
-        // Retrieve the terms from storage or database
-        $terms = Storage::disk('local')->exists('terms_and_conditions.txt')
-            ? Storage::disk('local')->get('terms_and_conditions.txt')
-            : '<p class="text-gray-700">No terms available.</p>';
+        // Admin-edited version wins; otherwise fall back to the committed
+        // default so the page is never empty in production.
+        $stored = Storage::disk('local')->exists('terms_and_conditions.txt')
+            ? trim(Storage::disk('local')->get('terms_and_conditions.txt'))
+            : '';
 
-        // Pass the terms to Inertia so React can use them
+        $terms = $stored !== ''
+            ? $stored
+            : file_get_contents(resource_path('legal/termeni-si-conditii.html'));
+
         return Inertia::render('TermeniSiConditii', [
             'terms' => $terms,
         ]);

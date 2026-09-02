@@ -136,10 +136,19 @@ export default function NewsletterSignUp() {
                                             href={route("termeni-si-conditii")}
                                             className="text-emerald-800 hover:underline"
                                         >
-                                            Termeni și Condiții, Politica de
-                                            Confidențialitate
+                                            Termenii și Condițiile
+                                        </Link>{" "}
+                                        și{" "}
+                                        <Link
+                                            href={route(
+                                                "politica-confidentialitate"
+                                            )}
+                                            className="text-emerald-800 hover:underline"
+                                        >
+                                            Politica de Confidențialitate
                                         </Link>
-                                        .
+                                        , inclusiv primirea de comunicări
+                                        comerciale prin e-mail.
                                     </span>
                                 </label>
                                 {errors.gdpr && (
