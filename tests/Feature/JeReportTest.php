@@ -78,7 +78,7 @@ class JeReportTest extends TestCase
         $this->assertSame('4000000000', $report->fiscal_serial);
         $this->assertSame('TB0000000001', $report->device_serial);
         $this->assertSame(3, $report->receipts_count);
-        $this->assertSame(6, $report->items_count);
+        $this->assertSame(7, $report->items_count);
         $this->assertEqualsWithDelta(64.40, (float) $report->total, 0.001);
         $this->assertSame('2026-06-01', $report->period_from->format('Y-m-d'));
         $this->assertSame('2026-06-02', $report->period_to->format('Y-m-d'));
@@ -91,6 +91,13 @@ class JeReportTest extends TestCase
         $this->assertSame('Numerar', $receipts[0]->pay_method);
         $this->assertEqualsWithDelta(25.50, (float) $receipts[0]->numerar, 0.001);
         $this->assertEqualsWithDelta(25.50, (float) $receipts[0]->total, 0.001);
+
+        // scale-sold item printed with a fractional BUC count (weight) and a
+        // zero price/value line still parses instead of failing integrity checks
+        $weighed = $receipts[0]->items()->where('name', 'KURTOS COCOS')->first();
+        $this->assertNotNull($weighed, 'weighed item with fractional qty was not parsed');
+        $this->assertSame(21, $weighed->qty);
+        $this->assertEqualsWithDelta(0.00, (float) $weighed->value, 0.001);
 
         // card receipt with a voided line and a wrapped product name
         $this->assertSame('Card', $receipts[1]->pay_method);

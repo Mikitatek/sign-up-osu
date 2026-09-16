@@ -27,7 +27,7 @@ class JeParser
 
     private const RE_DATA = '/^\s*DATA: (\d{2})-(\d{2})-(\d{4}) ORA: (\d{2}:\d{2}:\d{2})\s*$/';
 
-    private const RE_ITEM = '/^(.*?)\s+(-?\d+) BUC\. X (\d+\.\d{2})= (-?\d+\.\d{2}) N\s*$/';
+    private const RE_ITEM = '/^(.*?)\s+(-?\d+(?:\.\d+)?) BUC\. X (\d+\.\d{2})= (-?\d+\.\d{2}) N\s*$/';
 
     private const RE_TOTAL = '/^TOTAL LEI\s+(-?\d+\.\d{2})\s*$/';
 
@@ -248,7 +248,9 @@ class JeParser
             if (preg_match(self::RE_ITEM, $line, $m) && trim($m[1]) !== '') {
                 $items[] = [
                     'name' => trim($m[1]),
-                    'qty' => (int) $m[2],
+                    // scale-sold items print a fractional BUC count (e.g. weight in kg);
+                    // qty is stored as a whole unit count, so round rather than truncate
+                    'qty' => (int) round((float) $m[2]),
                     'price' => self::toBani($m[3]),
                     'value' => self::toBani($m[4]),
                 ];
