@@ -1,4 +1,5 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import SortableTable from "@/Components/SortableTable";
 import { Head, Link } from "@inertiajs/react";
 import {
     Bar,
@@ -368,45 +369,36 @@ export default function Product({
                         </Section>
 
                         <Section title="Istoric de preț">
-                            <table className="min-w-full table-auto text-sm">
-                                <thead className="bg-gray-100">
-                                    <tr>
-                                        <th className="px-3 py-2 text-right">
-                                            Preț (lei)
-                                        </th>
-                                        <th className="px-3 py-2 text-left">
-                                            Prima zi
-                                        </th>
-                                        <th className="px-3 py-2 text-left">
-                                            Ultima zi
-                                        </th>
-                                        <th className="px-3 py-2 text-right">
-                                            Buc. vândute
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {prices.map((p) => (
-                                        <tr
-                                            key={`${p.price}-${p.first_seen}`}
-                                            className="border-b hover:bg-gray-50"
-                                        >
-                                            <td className="px-3 py-2 text-right font-semibold">
+                            <SortableTable
+                                columns={[
+                                    {
+                                        key: "price",
+                                        label: "Preț (lei)",
+                                        align: "right",
+                                        render: (p) => (
+                                            <span className="font-semibold">
                                                 {fmtLei(p.price)}
-                                            </td>
-                                            <td className="px-3 py-2">
-                                                {fmtDate(p.first_seen)}
-                                            </td>
-                                            <td className="px-3 py-2">
-                                                {fmtDate(p.last_seen)}
-                                            </td>
-                                            <td className="px-3 py-2 text-right">
-                                                {p.qty}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                            </span>
+                                        ),
+                                    },
+                                    {
+                                        key: "first_seen",
+                                        label: "Prima zi",
+                                        align: "left",
+                                        render: (p) => fmtDate(p.first_seen),
+                                    },
+                                    {
+                                        key: "last_seen",
+                                        label: "Ultima zi",
+                                        align: "left",
+                                        render: (p) => fmtDate(p.last_seen),
+                                    },
+                                    { key: "qty", label: "Buc. vândute", align: "right" },
+                                ]}
+                                rows={prices}
+                                getRowKey={(p) => `${p.price}-${p.first_seen}`}
+                                initialSort={{ key: "first_seen", dir: "asc" }}
+                            />
                         </Section>
                     </div>
                 </div>

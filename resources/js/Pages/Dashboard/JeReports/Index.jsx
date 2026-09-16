@@ -1,6 +1,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import PrimaryButton from "@/Components/PrimaryButton";
 import InputError from "@/Components/InputError";
+import SortableTable from "@/Components/SortableTable";
 import { Head, Link, useForm, router } from "@inertiajs/react";
 import { useState } from "react";
 
@@ -106,77 +107,77 @@ export default function Index({ reports }) {
                             </h3>
                             {reports.length > 0 ? (
                                 <div className="overflow-x-auto">
-                                    <table className="min-w-full table-auto text-sm">
-                                        <thead className="bg-gray-100">
-                                            <tr>
-                                                <th className="px-4 py-2 text-left">
-                                                    Fișier
-                                                </th>
-                                                <th className="px-4 py-2 text-left">
-                                                    Serie fiscală
-                                                </th>
-                                                <th className="px-4 py-2 text-left">
-                                                    Perioadă
-                                                </th>
-                                                <th className="px-4 py-2 text-right">
-                                                    Bonuri
-                                                </th>
-                                                <th className="px-4 py-2 text-right">
-                                                    Total (lei)
-                                                </th>
-                                                <th className="px-4 py-2 text-left">
-                                                    Încărcat
-                                                </th>
-                                                <th className="px-4 py-2 text-center">
-                                                    Acțiuni
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {reports.map((report) => (
-                                                <tr
-                                                    key={report.id}
-                                                    className="border-b hover:bg-gray-50"
-                                                >
-                                                    <td className="border px-4 py-2">
-                                                        <Link
-                                                            href={route(
-                                                                "dashboard.je-reports.show",
-                                                                report.id
-                                                            )}
-                                                            className="font-semibold text-blue-700 hover:underline"
-                                                        >
-                                                            {
-                                                                report.original_filename
-                                                            }
-                                                        </Link>
-                                                    </td>
-                                                    <td className="border px-4 py-2">
-                                                        {report.fiscal_serial ??
-                                                            "—"}
-                                                    </td>
-                                                    <td className="border px-4 py-2 whitespace-nowrap">
-                                                        {fmtDate(
-                                                            report.period_from
-                                                        )}{" "}
-                                                        –{" "}
-                                                        {fmtDate(
-                                                            report.period_to
+                                    <SortableTable
+                                        columns={[
+                                            {
+                                                key: "original_filename",
+                                                label: "Fișier",
+                                                align: "left",
+                                                render: (report) => (
+                                                    <Link
+                                                        href={route(
+                                                            "dashboard.je-reports.show",
+                                                            report.id
                                                         )}
-                                                    </td>
-                                                    <td className="border px-4 py-2 text-right">
-                                                        {report.receipts_count}
-                                                    </td>
-                                                    <td className="border px-4 py-2 text-right">
+                                                        className="font-semibold text-blue-700 hover:underline"
+                                                    >
+                                                        {report.original_filename}
+                                                    </Link>
+                                                ),
+                                            },
+                                            {
+                                                key: "fiscal_serial",
+                                                label: "Serie fiscală",
+                                                align: "left",
+                                                value: (report) => report.fiscal_serial || null,
+                                                render: (report) => report.fiscal_serial ?? "—",
+                                            },
+                                            {
+                                                key: "period_from",
+                                                label: "Perioadă",
+                                                align: "left",
+                                                render: (report) => (
+                                                    <span className="whitespace-nowrap">
+                                                        {fmtDate(report.period_from)} –{" "}
+                                                        {fmtDate(report.period_to)}
+                                                    </span>
+                                                ),
+                                            },
+                                            {
+                                                key: "receipts_count",
+                                                label: "Bonuri",
+                                                align: "right",
+                                            },
+                                            {
+                                                key: "total",
+                                                label: "Total (lei)",
+                                                align: "right",
+                                                render: (report) => (
+                                                    <span className="font-semibold">
                                                         {fmtLei(report.total)}
-                                                    </td>
-                                                    <td className="border px-4 py-2 whitespace-nowrap">
+                                                    </span>
+                                                ),
+                                            },
+                                            {
+                                                key: "created_at",
+                                                label: "Încărcat",
+                                                align: "left",
+                                                render: (report) => (
+                                                    <span className="whitespace-nowrap">
                                                         {report.created_at}
                                                         {report.uploaded_by
                                                             ? ` · ${report.uploaded_by}`
                                                             : ""}
-                                                    </td>
-                                                    <td className="border px-4 py-2 text-center whitespace-nowrap">
+                                                    </span>
+                                                ),
+                                            },
+                                            {
+                                                key: "actions",
+                                                label: "Acțiuni",
+                                                align: "right",
+                                                sortable: false,
+                                                render: (report) => (
+                                                    <span className="whitespace-nowrap">
                                                         <Link
                                                             href={route(
                                                                 "dashboard.je-reports.show",
@@ -197,26 +198,25 @@ export default function Index({ reports }) {
                                                         </a>
                                                         <button
                                                             onClick={() =>
-                                                                handleDelete(
-                                                                    report
-                                                                )
+                                                                handleDelete(report)
                                                             }
                                                             disabled={
-                                                                deleting ===
-                                                                report.id
+                                                                deleting === report.id
                                                             }
                                                             className="font-bold text-red-600 hover:text-red-800 disabled:opacity-50"
                                                         >
-                                                            {deleting ===
-                                                            report.id
+                                                            {deleting === report.id
                                                                 ? "…"
                                                                 : "X"}
                                                         </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                                    </span>
+                                                ),
+                                            },
+                                        ]}
+                                        rows={reports}
+                                        getRowKey={(report) => report.id}
+                                        initialSort={{ key: "created_at", dir: "desc" }}
+                                    />
                                 </div>
                             ) : (
                                 <p className="text-gray-500">

@@ -6,6 +6,7 @@ use App\Models\JeReport;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class JeReportTest extends TestCase
@@ -120,6 +121,77 @@ class JeReportTest extends TestCase
         $this->actingAs($admin)
             ->get(route('dashboard.je-reports.show', $report))
             ->assertOk();
+    }
+
+    public function test_show_filters_products_summary_by_date_range(): void
+    {
+        $admin = $this->admin();
+        $this->upload($admin, $this->fixture());
+        $report = JeReport::first();
+
+        // unfiltered: distinct products from all 3 receipts (01 and 02 June)
+        $this->actingAs($admin)
+            ->get(route('dashboard.je-reports.show', $report))
+            ->assertInertia(fn ($page) => $page
+                ->has('products', 5)
+                ->where('filters.produse_de', null)
+                ->where('filters.produse_pana', null)
+            );
+
+        // filtered to 02 June only: just PRODUS C from that day's receipt
+        $this->actingAs($admin)
+            ->get(route('dashboard.je-reports.show', [$report, 'produse_de' => '2026-06-02']))
+            ->assertInertia(fn ($page) => $page
+                ->has('products', 1)
+                ->where('products.0.name', 'PRODUS C')
+                ->where('filters.produse_de', '2026-06-02')
+            );
+
+        // an invalid date is ignored rather than breaking the query
+        $this->actingAs($admin)
+            ->get(route('dashboard.je-reports.show', [$report, 'produse_de' => 'nu-e-o-data']))
+            ->assertInertia(fn ($page) => $page
+                ->has('products', 5)
+                ->where('filters.produse_de', null)
+            );
+    }
+
+    public function test_month_show_compares_with_previous_month_and_previous_year(): void
+    {
+        $admin = $this->admin();
+        $this->upload($admin, $this->fixture());
+        $report = JeReport::first();
+
+        // same calendar month, one year earlier — no .je fixture for this,
+        // so insert the receipt row directly
+        DB::table('je_receipts')->insert([
+            'je_report_id' => $report->id,
+            'receipt_date' => '2025-06-15',
+            'receipt_time' => '10:00:00',
+            'z' => 1,
+            'bf' => 1,
+            'id_bf' => 'TESTLASTYEAR00000001',
+            'total' => 20.00,
+            'pay_method' => 'Numerar',
+            'numerar' => 20.00,
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->get(route('dashboard.je-reports.month', [$report, 'month' => '2026-06']));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->where('prev_year.month', '2025-06')
+            ->where('prev_year.n', 1)
+            ->where('prev_year.total', 20)
+            ->where(
+                'insights',
+                fn ($insights) => collect($insights)
+                    ->contains(fn ($line) => str_contains($line, 'anului trecut'))
+            )
+            // no June 2026 data one month back (May 2026), so no prev-month comparison
+            ->where('prev', null)
+        );
     }
 
     public function test_upload_rejects_tampered_totals(): void

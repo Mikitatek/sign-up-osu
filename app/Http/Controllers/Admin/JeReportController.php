@@ -118,10 +118,19 @@ class JeReportController extends Controller
 
         $hourly = $this->hourlyAverages($jeReport, max(1, count($daily)));
 
+        $isDate = fn (?string $v) => $v && preg_match('/^\d{4}-\d{2}-\d{2}$/', $v);
+        $produseDe = $request->query('produse_de');
+        $produsePana = $request->query('produse_pana');
+        $produseDe = $isDate($produseDe) ? $produseDe : null;
+        $produsePana = $isDate($produsePana) ? $produsePana : null;
+
         $products = $jeReport->items()
-            ->selectRaw('name, SUM(qty) as qty, SUM(value) as value')
-            ->groupBy('name')
-            ->orderByRaw('SUM(value) DESC')
+            ->join('je_receipts', 'je_items.je_receipt_id', '=', 'je_receipts.id')
+            ->when($produseDe, fn ($q) => $q->whereDate('je_receipts.receipt_date', '>=', $produseDe))
+            ->when($produsePana, fn ($q) => $q->whereDate('je_receipts.receipt_date', '<=', $produsePana))
+            ->selectRaw('je_items.name, SUM(je_items.qty) as qty, SUM(je_items.value) as value')
+            ->groupBy('je_items.name')
+            ->orderByRaw('SUM(je_items.value) DESC')
             ->get()
             ->map(fn ($row) => $this->numericRow($row));
 
@@ -159,6 +168,8 @@ class JeReportController extends Controller
             'filters' => [
                 'luna' => $month,
                 'metoda' => $method,
+                'produse_de' => $produseDe,
+                'produse_pana' => $produsePana,
             ],
         ]);
     }
@@ -220,14 +231,10 @@ class JeReportController extends Controller
             ->map(fn ($row) => $this->numericRow($row));
 
         $prevMonth = date('Y-m', strtotime("{$from} -1 month"));
-        [$pFrom, $pTo] = $this->monthRange($prevMonth);
-        $prev = $jeReport->receipts()
-            ->selectRaw('COUNT(*) as n, SUM(total) as total')
-            ->whereBetween('receipt_date', [$pFrom, $pTo])
-            ->first();
-        $prevData = ((int) $prev->n) > 0
-            ? ['month' => $prevMonth, 'label' => $this->monthLabel($prevMonth), 'n' => (int) $prev->n, 'total' => round((float) $prev->total, 2)]
-            : null;
+        $prevData = $this->monthComparison($jeReport, $prevMonth);
+
+        $prevYear = date('Y-m', strtotime("{$from} -1 year"));
+        $prevYearData = $this->monthComparison($jeReport, $prevYear);
 
         return Inertia::render('Dashboard/JeReports/Month', [
             'report' => ['id' => $jeReport->id, 'fiscal_serial' => $jeReport->fiscal_serial],
@@ -239,8 +246,23 @@ class JeReportController extends Controller
             'products' => $products,
             'methods' => $methods,
             'prev' => $prevData,
-            'insights' => $this->monthInsights($daily, $hourly, $weekdays, $products, $methods, $prevData),
+            'prev_year' => $prevYearData,
+            'insights' => $this->monthInsights($daily, $hourly, $weekdays, $products, $methods, $prevData, $prevYearData),
         ]);
+    }
+
+    /** Nr. bonuri și total pentru o lună (Y-m) dată, sau null dacă luna n-a avut vânzări în acest raport. */
+    private function monthComparison(JeReport $jeReport, string $ym): ?array
+    {
+        [$from, $to] = $this->monthRange($ym);
+        $row = $jeReport->receipts()
+            ->selectRaw('COUNT(*) as n, SUM(total) as total')
+            ->whereBetween('receipt_date', [$from, $to])
+            ->first();
+
+        return ((int) $row->n) > 0
+            ? ['month' => $ym, 'label' => $this->monthLabel($ym), 'n' => (int) $row->n, 'total' => round((float) $row->total, 2)]
+            : null;
     }
 
     /** Detaliu pe un produs: evoluție lunară, profil orar, preț mediu, concluzii. */
@@ -339,7 +361,7 @@ class JeReportController extends Controller
         return self::RO_MONTHS[(int) substr($month, 5, 2)].' '.substr($month, 0, 4);
     }
 
-    private function monthInsights($daily, $hourly, $weekdays, $products, $methods, ?array $prev): array
+    private function monthInsights($daily, $hourly, $weekdays, $products, $methods, ?array $prev, ?array $prevYear = null): array
     {
         $out = [];
         $total = round(collect($daily)->sum('total'), 2);
@@ -355,6 +377,13 @@ class JeReportController extends Controller
             $dir = $delta >= 0 ? 'peste' : 'sub';
             $out[] = 'Față de '.$prev['label'].' ('.$fmt($prev['total']).' lei): '
                 .number_format(abs($delta), 1, ',', '.')."% {$dir} luna anterioară.";
+        }
+
+        if ($prevYear && $prevYear['total'] > 0) {
+            $delta = ($total - $prevYear['total']) / $prevYear['total'] * 100;
+            $dir = $delta >= 0 ? 'peste' : 'sub';
+            $out[] = 'Față de '.$prevYear['label'].' ('.$fmt($prevYear['total']).' lei, '.$prevYear['n'].' bonuri): '
+                .number_format(abs($delta), 1, ',', '.').'% '.$dir.' aceeași lună a anului trecut.';
         }
 
         $best = collect($daily)->sortByDesc('total')->first();

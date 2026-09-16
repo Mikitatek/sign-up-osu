@@ -1,4 +1,5 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import SortableTable from "@/Components/SortableTable";
 import { Head, Link } from "@inertiajs/react";
 import {
     Bar,
@@ -30,6 +31,42 @@ const fmtDate = (iso) => {
     return `${d}.${m}.${y}`;
 };
 
+const fmtPct = (v) =>
+    new Intl.NumberFormat("ro-RO", {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+    }).format(v);
+
+function ComparisonCard({ label, current, compare }) {
+    if (!compare || compare.total <= 0) {
+        return (
+            <div className="rounded-lg bg-white p-4 shadow-md">
+                <div className="text-sm text-gray-500">{label}</div>
+                <div className="mt-1 text-sm text-gray-400">
+                    Fără date de comparat.
+                </div>
+            </div>
+        );
+    }
+    const delta = ((current - compare.total) / compare.total) * 100;
+    const up = delta >= 0;
+    return (
+        <div className="rounded-lg bg-white p-4 shadow-md">
+            <div className="text-sm text-gray-500">{label}</div>
+            <div
+                className={`text-2xl font-bold ${
+                    up ? "text-emerald-600" : "text-red-600"
+                }`}
+            >
+                {up ? "▲" : "▼"} {fmtPct(Math.abs(delta))}%
+            </div>
+            <div className="text-xs text-gray-400">
+                {compare.label}: {fmtLei(compare.total)} lei, {compare.n} bonuri
+            </div>
+        </div>
+    );
+}
+
 function Section({ title, children, right }) {
     return (
         <div className="overflow-hidden bg-white shadow-md sm:rounded-lg">
@@ -59,8 +96,11 @@ export default function Month({
     products,
     methods,
     prev,
+    prev_year: prevYear,
     insights,
 }) {
+    const total = daily.reduce((s, d) => s + d.total, 0);
+
     const dailyChart = daily.map((d) => ({
         ...d,
         label: d.receipt_date.slice(8, 10),
@@ -117,18 +157,25 @@ export default function Month({
 
             <div className="py-12">
                 <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <ComparisonCard
+                            label="Față de luna anterioară"
+                            current={total}
+                            compare={prev}
+                        />
+                        <ComparisonCard
+                            label="Față de aceeași lună, anul trecut"
+                            current={total}
+                            compare={prevYear}
+                        />
+                    </div>
+
                     <Section title="Concluzii">
                         <ul className="list-disc space-y-1 pl-5 text-sm text-gray-700">
                             {insights.map((line, i) => (
                                 <li key={i}>{line}</li>
                             ))}
                         </ul>
-                        {prev && (
-                            <p className="mt-3 text-xs text-gray-400">
-                                Comparația se face cu {prev.label}: {prev.n}{" "}
-                                bonuri, {fmtLei(prev.total)} lei.
-                            </p>
-                        )}
                     </Section>
 
                     <div className="grid gap-6 lg:grid-cols-2">
@@ -318,49 +365,42 @@ export default function Month({
                     </div>
 
                     <Section title="Produse vândute în această lună">
-                        <div className="max-h-[28rem] overflow-auto">
-                            <table className="min-w-full table-auto text-sm">
-                                <thead className="sticky top-0 bg-gray-100">
-                                    <tr>
-                                        <th className="px-3 py-2 text-left">
-                                            Produs
-                                        </th>
-                                        <th className="px-3 py-2 text-right">
-                                            Cantitate
-                                        </th>
-                                        <th className="px-3 py-2 text-right">
-                                            Valoare (lei)
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {products.map((p) => (
-                                        <tr
-                                            key={p.name}
-                                            className="border-b hover:bg-gray-50"
+                        <SortableTable
+                            columns={[
+                                {
+                                    key: "name",
+                                    label: "Produs",
+                                    align: "left",
+                                    render: (p) => (
+                                        <Link
+                                            href={`${route(
+                                                "dashboard.je-reports.product",
+                                                report.id
+                                            )}?nume=${encodeURIComponent(p.name)}`}
+                                            className="font-medium text-blue-700 hover:underline"
                                         >
-                                            <td className="px-3 py-2">
-                                                <Link
-                                                    href={`${route(
-                                                        "dashboard.je-reports.product",
-                                                        report.id
-                                                    )}?nume=${encodeURIComponent(p.name)}`}
-                                                    className="font-medium text-blue-700 hover:underline"
-                                                >
-                                                    {p.name}
-                                                </Link>
-                                            </td>
-                                            <td className="px-3 py-2 text-right">
-                                                {p.qty}
-                                            </td>
-                                            <td className="px-3 py-2 text-right font-semibold">
-                                                {fmtLei(p.value)}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                            {p.name}
+                                        </Link>
+                                    ),
+                                },
+                                { key: "qty", label: "Cantitate", align: "right" },
+                                {
+                                    key: "value",
+                                    label: "Valoare (lei)",
+                                    align: "right",
+                                    render: (p) => (
+                                        <span className="font-semibold">
+                                            {fmtLei(p.value)}
+                                        </span>
+                                    ),
+                                },
+                            ]}
+                            rows={products}
+                            getRowKey={(p) => p.name}
+                            initialSort={{ key: "value", dir: "desc" }}
+                            stickyHeader
+                            maxHeight="28rem"
+                        />
                     </Section>
                 </div>
             </div>

@@ -1,4 +1,5 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import SortableTable from "@/Components/SortableTable";
 import { Head, Link, router } from "@inertiajs/react";
 import { useState } from "react";
 import {
@@ -95,57 +96,62 @@ function Section({ title, children, right }) {
     );
 }
 
-function MethodTable({ rows, firstColumn, firstLabel, firstFormat, firstLink }) {
+function MethodTable({
+    rows,
+    firstColumn,
+    firstLabel,
+    firstFormat,
+    firstLink,
+    initialSortDir = "asc",
+}) {
+    const columns = [
+        {
+            key: firstColumn,
+            label: firstLabel,
+            align: "left",
+            render: (row) =>
+                firstLink ? (
+                    <Link
+                        href={firstLink(row)}
+                        className="whitespace-nowrap font-medium text-blue-700 hover:underline"
+                    >
+                        {firstFormat(row[firstColumn])}
+                    </Link>
+                ) : (
+                    <span className="whitespace-nowrap">
+                        {firstFormat(row[firstColumn])}
+                    </span>
+                ),
+        },
+        { key: "n", label: "Nr. bonuri", align: "right" },
+        {
+            key: "total",
+            label: "Total (lei)",
+            align: "right",
+            render: (row) => (
+                <span className="font-semibold">{fmtLei(row.total)}</span>
+            ),
+        },
+        ...METHOD_COLUMNS.map(([key, label]) => ({
+            key,
+            label,
+            align: "right",
+            value: (row) => row[key] || null,
+            render: (row) => (
+                <span className="text-gray-600">{fmtLeiDash(row[key])}</span>
+            ),
+        })),
+    ];
+
     return (
-        <div className="max-h-[28rem] overflow-auto">
-            <table className="min-w-full table-auto text-sm">
-                <thead className="sticky top-0 bg-gray-100">
-                    <tr>
-                        <th className="px-3 py-2 text-left">{firstLabel}</th>
-                        <th className="px-3 py-2 text-right">Nr. bonuri</th>
-                        <th className="px-3 py-2 text-right">Total (lei)</th>
-                        {METHOD_COLUMNS.map(([key, label]) => (
-                            <th key={key} className="px-3 py-2 text-right">
-                                {label}
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {rows.map((row) => (
-                        <tr
-                            key={row[firstColumn]}
-                            className="border-b hover:bg-gray-50"
-                        >
-                            <td className="whitespace-nowrap px-3 py-2">
-                                {firstLink ? (
-                                    <Link
-                                        href={firstLink(row)}
-                                        className="font-medium text-blue-700 hover:underline"
-                                    >
-                                        {firstFormat(row[firstColumn])}
-                                    </Link>
-                                ) : (
-                                    firstFormat(row[firstColumn])
-                                )}
-                            </td>
-                            <td className="px-3 py-2 text-right">{row.n}</td>
-                            <td className="px-3 py-2 text-right font-semibold">
-                                {fmtLei(row.total)}
-                            </td>
-                            {METHOD_COLUMNS.map(([key]) => (
-                                <td
-                                    key={key}
-                                    className="px-3 py-2 text-right text-gray-600"
-                                >
-                                    {fmtLeiDash(row[key])}
-                                </td>
-                            ))}
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
+        <SortableTable
+            columns={columns}
+            rows={rows}
+            getRowKey={(row) => row[firstColumn]}
+            initialSort={{ key: firstColumn, dir: initialSortDir }}
+            stickyHeader
+            maxHeight="28rem"
+        />
     );
 }
 
@@ -206,6 +212,24 @@ export default function Show({
             only: ["receipts", "filters"],
         });
     };
+
+    const applyProductFilter = (patch) => {
+        const params = { ...filters, ...patch };
+        Object.keys(params).forEach(
+            (k) => params[k] || delete params[k]
+        );
+        router.get(route("dashboard.je-reports.show", report.id), params, {
+            preserveScroll: true,
+            preserveState: true,
+            only: ["products", "filters"],
+        });
+    };
+
+    const productsPeriodLabel = filters.produse_de || filters.produse_pana
+        ? `${filters.produse_de ? fmtDate(filters.produse_de) : "început"} – ${
+              filters.produse_pana ? fmtDate(filters.produse_pana) : "prezent"
+          }`
+        : "toată perioada";
 
     return (
         <AuthenticatedLayout
@@ -407,85 +431,125 @@ export default function Show({
                                     </Bar>
                                 </BarChart>
                             </ResponsiveContainer>
-                            <table className="min-w-full table-auto text-sm">
-                                <thead className="bg-gray-100">
-                                    <tr>
-                                        <th className="px-3 py-2 text-left">
-                                            Metodă
-                                        </th>
-                                        <th className="px-3 py-2 text-right">
-                                            Nr. bonuri
-                                        </th>
-                                        <th className="px-3 py-2 text-right">
-                                            Total (lei)
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {methods.map((m) => (
-                                        <tr
-                                            key={m.pay_method}
-                                            className="border-b hover:bg-gray-50"
-                                        >
-                                            <td className="px-3 py-2">
-                                                {m.pay_method}
-                                            </td>
-                                            <td className="px-3 py-2 text-right">
-                                                {m.n}
-                                            </td>
-                                            <td className="px-3 py-2 text-right font-semibold">
+                            <SortableTable
+                                columns={[
+                                    { key: "pay_method", label: "Metodă", align: "left" },
+                                    { key: "n", label: "Nr. bonuri", align: "right" },
+                                    {
+                                        key: "total",
+                                        label: "Total (lei)",
+                                        align: "right",
+                                        render: (m) => (
+                                            <span className="font-semibold">
                                                 {fmtLei(m.total)}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                            </span>
+                                        ),
+                                    },
+                                ]}
+                                rows={methods}
+                                getRowKey={(m) => m.pay_method}
+                                initialSort={{ key: "total", dir: "desc" }}
+                            />
                         </Section>
 
-                        <Section title="Sumar produse">
-                            <div className="max-h-96 overflow-auto">
-                                <table className="min-w-full table-auto text-sm">
-                                    <thead className="sticky top-0 bg-gray-100">
-                                        <tr>
-                                            <th className="px-3 py-2 text-left">
-                                                Produs
-                                            </th>
-                                            <th className="px-3 py-2 text-right">
-                                                Cantitate
-                                            </th>
-                                            <th className="px-3 py-2 text-right">
-                                                Valoare (lei)
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {products.map((p) => (
-                                            <tr
-                                                key={p.name}
-                                                className="border-b hover:bg-gray-50"
-                                            >
-                                                <td className="px-3 py-2">
-                                                    <Link
-                                                        href={`${route(
-                                                            "dashboard.je-reports.product",
-                                                            report.id
-                                                        )}?nume=${encodeURIComponent(p.name)}`}
-                                                        className="font-medium text-blue-700 hover:underline"
-                                                    >
-                                                        {p.name}
-                                                    </Link>
-                                                </td>
-                                                <td className="px-3 py-2 text-right">
-                                                    {p.qty}
-                                                </td>
-                                                <td className="px-3 py-2 text-right font-semibold">
+                        <Section
+                            title="Sumar produse"
+                            right={
+                                <div className="flex flex-wrap items-center gap-2 text-sm">
+                                    <input
+                                        type="date"
+                                        value={filters.produse_de ?? ""}
+                                        min={report.period_from ?? undefined}
+                                        max={report.period_to ?? undefined}
+                                        onChange={(e) =>
+                                            applyProductFilter({
+                                                produse_de: e.target.value,
+                                            })
+                                        }
+                                        className="rounded-md border-gray-300 text-sm"
+                                        aria-label="Sumar produse de la data"
+                                    />
+                                    <span className="text-gray-400">–</span>
+                                    <input
+                                        type="date"
+                                        value={filters.produse_pana ?? ""}
+                                        min={report.period_from ?? undefined}
+                                        max={report.period_to ?? undefined}
+                                        onChange={(e) =>
+                                            applyProductFilter({
+                                                produse_pana: e.target.value,
+                                            })
+                                        }
+                                        className="rounded-md border-gray-300 text-sm"
+                                        aria-label="Sumar produse până la data"
+                                    />
+                                    {(filters.produse_de ||
+                                        filters.produse_pana) && (
+                                        <button
+                                            onClick={() =>
+                                                applyProductFilter({
+                                                    produse_de: "",
+                                                    produse_pana: "",
+                                                })
+                                            }
+                                            className="font-semibold text-blue-700 hover:underline"
+                                        >
+                                            Resetează
+                                        </button>
+                                    )}
+                                </div>
+                            }
+                        >
+                            <p className="mb-3 text-xs text-gray-400">
+                                Perioadă: {productsPeriodLabel} · {products.length}{" "}
+                                {products.length === 1 ? "produs" : "produse"}
+                            </p>
+                            {products.length > 0 ? (
+                                <SortableTable
+                                    columns={[
+                                        {
+                                            key: "name",
+                                            label: "Produs",
+                                            align: "left",
+                                            render: (p) => (
+                                                <Link
+                                                    href={`${route(
+                                                        "dashboard.je-reports.product",
+                                                        report.id
+                                                    )}?nume=${encodeURIComponent(p.name)}`}
+                                                    className="font-medium text-blue-700 hover:underline"
+                                                >
+                                                    {p.name}
+                                                </Link>
+                                            ),
+                                        },
+                                        {
+                                            key: "qty",
+                                            label: "Cantitate",
+                                            align: "right",
+                                        },
+                                        {
+                                            key: "value",
+                                            label: "Valoare (lei)",
+                                            align: "right",
+                                            render: (p) => (
+                                                <span className="font-semibold">
                                                     {fmtLei(p.value)}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                                </span>
+                                            ),
+                                        },
+                                    ]}
+                                    rows={products}
+                                    getRowKey={(p) => p.name}
+                                    initialSort={{ key: "value", dir: "desc" }}
+                                    stickyHeader
+                                    maxHeight="24rem"
+                                />
+                            ) : (
+                                <p className="text-sm text-gray-500">
+                                    Niciun produs vândut în perioada selectată.
+                                </p>
+                            )}
                         </Section>
                     </div>
 
@@ -590,66 +654,55 @@ export default function Show({
                             </div>
                         }
                     >
+                        <p className="mb-2 text-xs text-gray-400">
+                            Sortarea se aplică doar paginii curente — folosește
+                            filtrele de mai sus ca să restrângi lista întâi.
+                        </p>
                         <div className="overflow-x-auto">
-                            <table className="min-w-full table-auto text-sm">
-                                <thead className="bg-gray-100">
-                                    <tr>
-                                        <th className="px-3 py-2 text-left">
-                                            Data
-                                        </th>
-                                        <th className="px-3 py-2 text-left">
-                                            Ora
-                                        </th>
-                                        <th className="px-3 py-2 text-right">
-                                            Z
-                                        </th>
-                                        <th className="px-3 py-2 text-right">
-                                            BF
-                                        </th>
-                                        <th className="px-3 py-2 text-right">
-                                            Total (lei)
-                                        </th>
-                                        <th className="px-3 py-2 text-left">
-                                            Metodă de plată
-                                        </th>
-                                        <th className="px-3 py-2 text-left">
-                                            CIF client
-                                        </th>
-                                        <th className="px-3 py-2 text-left">
-                                            Observații
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {receipts.data.map((r) => (
-                                        <tr
-                                            key={r.id}
-                                            className="border-b hover:bg-gray-50"
-                                        >
-                                            <td className="whitespace-nowrap px-3 py-2">
-                                                {fmtDate(
-                                                    r.receipt_date.slice(0, 10)
-                                                )}
-                                            </td>
-                                            <td className="px-3 py-2">
-                                                {r.receipt_time}
-                                            </td>
-                                            <td className="px-3 py-2 text-right">
-                                                {r.z}
-                                            </td>
-                                            <td className="px-3 py-2 text-right">
-                                                {r.bf}
-                                            </td>
-                                            <td className="px-3 py-2 text-right font-semibold">
+                            <SortableTable
+                                columns={[
+                                    {
+                                        key: "receipt_date",
+                                        label: "Data",
+                                        align: "left",
+                                        render: (r) => (
+                                            <span className="whitespace-nowrap">
+                                                {fmtDate(r.receipt_date.slice(0, 10))}
+                                            </span>
+                                        ),
+                                    },
+                                    { key: "receipt_time", label: "Ora", align: "left" },
+                                    { key: "z", label: "Z", align: "right" },
+                                    { key: "bf", label: "BF", align: "right" },
+                                    {
+                                        key: "total",
+                                        label: "Total (lei)",
+                                        align: "right",
+                                        render: (r) => (
+                                            <span className="font-semibold">
                                                 {fmtLei(r.total)}
-                                            </td>
-                                            <td className="px-3 py-2">
-                                                {r.pay_method}
-                                            </td>
-                                            <td className="px-3 py-2">
-                                                {r.cif_client ?? ""}
-                                            </td>
-                                            <td className="px-3 py-2 text-xs text-gray-500">
+                                            </span>
+                                        ),
+                                    },
+                                    {
+                                        key: "pay_method",
+                                        label: "Metodă de plată",
+                                        align: "left",
+                                    },
+                                    {
+                                        key: "cif_client",
+                                        label: "CIF client",
+                                        align: "left",
+                                        value: (r) => r.cif_client || null,
+                                        render: (r) => r.cif_client ?? "",
+                                    },
+                                    {
+                                        key: "observatii",
+                                        label: "Observații",
+                                        align: "left",
+                                        sortable: false,
+                                        render: (r) => (
+                                            <span className="text-xs text-gray-500">
                                                 {[
                                                     r.numerar_eur_orig
                                                         ? `plătit ${r.numerar_eur_orig} EUR`
@@ -660,11 +713,14 @@ export default function Show({
                                                 ]
                                                     .filter(Boolean)
                                                     .join("; ")}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                            </span>
+                                        ),
+                                    },
+                                ]}
+                                rows={receipts.data}
+                                getRowKey={(r) => r.id}
+                                initialSort={{ key: "receipt_date", dir: "asc" }}
+                            />
                         </div>
 
                         <div className="mt-4 flex flex-wrap items-center gap-1">
