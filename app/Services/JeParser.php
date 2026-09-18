@@ -27,7 +27,10 @@ class JeParser
 
     private const RE_DATA = '/^\s*DATA: (\d{2})-(\d{2})-(\d{4}) ORA: (\d{2}:\d{2}:\d{2})\s*$/';
 
-    private const RE_ITEM = '/^(.*?)\s+(-?\d+(?:\.\d+)?) BUC\. X (\d+\.\d{2})= (-?\d+\.\d{2}) N\s*$/';
+    // the unit is usually BUC (piece) but some products are configured with
+    // other units (e.g. GR); some AMEF firmware/models also print it without
+    // the trailing period
+    private const RE_ITEM = '/^(.*?)\s+(-?\d+(?:\.\d+)?) [A-Z]{1,4}\.? X (\d+\.\d{2})= (-?\d+\.\d{2}) N\s*$/';
 
     private const RE_TOTAL = '/^TOTAL LEI\s+(-?\d+\.\d{2})\s*$/';
 

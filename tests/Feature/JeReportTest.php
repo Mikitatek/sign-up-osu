@@ -79,8 +79,8 @@ class JeReportTest extends TestCase
         $this->assertSame('4000000000', $report->fiscal_serial);
         $this->assertSame('TB0000000001', $report->device_serial);
         $this->assertSame(3, $report->receipts_count);
-        $this->assertSame(7, $report->items_count);
-        $this->assertEqualsWithDelta(64.40, (float) $report->total, 0.001);
+        $this->assertSame(9, $report->items_count);
+        $this->assertEqualsWithDelta(81.90, (float) $report->total, 0.001);
         $this->assertSame('2026-06-01', $report->period_from->format('Y-m-d'));
         $this->assertSame('2026-06-02', $report->period_to->format('Y-m-d'));
         $this->assertSame($admin->id, $report->uploaded_by);
@@ -88,10 +88,10 @@ class JeReportTest extends TestCase
         $receipts = $report->receipts()->orderBy('receipt_date')->orderBy('receipt_time')->get();
         $this->assertCount(3, $receipts);
 
-        // cash receipt: 30.00 tendered - 4.50 change = 25.50 net
+        // cash receipt: 30.00 tendered - 4.00 change = 26.00 net
         $this->assertSame('Numerar', $receipts[0]->pay_method);
-        $this->assertEqualsWithDelta(25.50, (float) $receipts[0]->numerar, 0.001);
-        $this->assertEqualsWithDelta(25.50, (float) $receipts[0]->total, 0.001);
+        $this->assertEqualsWithDelta(26.00, (float) $receipts[0]->numerar, 0.001);
+        $this->assertEqualsWithDelta(26.00, (float) $receipts[0]->total, 0.001);
 
         // scale-sold item printed with a fractional BUC count (weight) and a
         // zero price/value line still parses instead of failing integrity checks
@@ -99,6 +99,12 @@ class JeReportTest extends TestCase
         $this->assertNotNull($weighed, 'weighed item with fractional qty was not parsed');
         $this->assertSame(21, $weighed->qty);
         $this->assertEqualsWithDelta(0.00, (float) $weighed->value, 0.001);
+
+        // some AMEF firmware prints "BUC X" without the trailing period
+        $noDot = $receipts[0]->items()->where('name', 'GARANTIE SGR')->first();
+        $this->assertNotNull($noDot, 'item line without a period after BUC was not parsed');
+        $this->assertSame(1, $noDot->qty);
+        $this->assertEqualsWithDelta(0.50, (float) $noDot->value, 0.001);
 
         // card receipt with a voided line and a wrapped product name
         $this->assertSame('Card', $receipts[1]->pay_method);
@@ -117,6 +123,12 @@ class JeReportTest extends TestCase
         // online receipt with client CIF
         $this->assertSame('Online', $receipts[2]->pay_method);
         $this->assertSame('RO12345678', $receipts[2]->cif_client);
+        $this->assertEqualsWithDelta(38.00, (float) $receipts[2]->total, 0.001);
+
+        // item line using a unit other than BUC (e.g. GR) still parses
+        $gramItem = $receipts[2]->items()->where('name', 'SANDWICH CU SUNCA')->first();
+        $this->assertNotNull($gramItem, 'item line with a non-BUC unit was not parsed');
+        $this->assertEqualsWithDelta(17.00, (float) $gramItem->value, 0.001);
 
         $this->actingAs($admin)
             ->get(route('dashboard.je-reports.show', $report))
@@ -133,16 +145,16 @@ class JeReportTest extends TestCase
         $this->actingAs($admin)
             ->get(route('dashboard.je-reports.show', $report))
             ->assertInertia(fn ($page) => $page
-                ->has('products', 5)
+                ->has('products', 7)
                 ->where('filters.produse_de', null)
                 ->where('filters.produse_pana', null)
             );
 
-        // filtered to 02 June only: just PRODUS C from that day's receipt
+        // filtered to 02 June only: PRODUS C and SANDWICH CU SUNCA from that day's receipt
         $this->actingAs($admin)
             ->get(route('dashboard.je-reports.show', [$report, 'produse_de' => '2026-06-02']))
             ->assertInertia(fn ($page) => $page
-                ->has('products', 1)
+                ->has('products', 2)
                 ->where('products.0.name', 'PRODUS C')
                 ->where('filters.produse_de', '2026-06-02')
             );
@@ -151,7 +163,7 @@ class JeReportTest extends TestCase
         $this->actingAs($admin)
             ->get(route('dashboard.je-reports.show', [$report, 'produse_de' => 'nu-e-o-data']))
             ->assertInertia(fn ($page) => $page
-                ->has('products', 5)
+                ->has('products', 7)
                 ->where('filters.produse_de', null)
             );
     }
@@ -197,7 +209,7 @@ class JeReportTest extends TestCase
     public function test_upload_rejects_tampered_totals(): void
     {
         $tampered = str_replace(
-            'TOTAL LEI                            25.50',
+            'TOTAL LEI                            26.00',
             'TOTAL LEI                            99.99',
             $this->fixture()
         );

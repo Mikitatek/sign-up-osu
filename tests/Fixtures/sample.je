@@ -21,11 +21,12 @@ PRODUS A           2 BUC. X 10.00= 20.00 N
 SUBTOTAL                             20.00
 PRODUS B             1 BUC. X 5.50= 5.50 N
 KURTOS COCOS        20.900 BUC. X 0.00= 0.00 N
-SUBTOTAL                             25.50
+GARANTIE SGR          1 BUC X 0.50= 0.50 N
+SUBTOTAL                             26.00
                               ------------
-TOTAL LEI                            25.50
+TOTAL LEI                            26.00
 NUMERAR LEI                          30.00
-REST                                  4.50
+REST                                  4.00
 ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 TOTAL NEPLATITOR TVA                  0.00
 ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
@@ -70,10 +71,10 @@ S/N:TB0000000001               TD:00000011
               FISCAL ZILNIC
                 Z NR:0001
 ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-NUMERAR                              25.50
+NUMERAR                              26.00
 CARD                                 17.90
 ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-VAL. TOTAL VANZARI                   43.40
+VAL. TOTAL VANZARI                   43.90
 ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 NUMAR BONURI FISCALE                     2
 ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
@@ -93,10 +94,11 @@ S/N:TB0000000001               TD:00000012
           CIF CLIENT: RO12345678
 ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 PRODUS C           3 BUC. X 7.00= 21.00 N
-SUBTOTAL                             21.00
+SANDWICH CU SUNCA    1 GR X 17.00= 17.00 N
+SUBTOTAL                             38.00
                               ------------
-TOTAL LEI                            21.00
-ONLINE                               21.00
+TOTAL LEI                            38.00
+ONLINE                               38.00
 REST                                  0.00
 ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 TOTAL NEPLATITOR TVA                  0.00
@@ -118,7 +120,7 @@ S/N:TB0000000001               TD:00000013
               FISCAL ZILNIC
                 Z NR:0002
 ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-VAL. TOTAL VANZARI                   21.00
+VAL. TOTAL VANZARI                   38.00
 ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 NUMAR BONURI FISCALE                     1
 ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
