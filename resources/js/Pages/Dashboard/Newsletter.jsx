@@ -1,6 +1,5 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, usePage } from "@inertiajs/react";
-import { Inertia } from "@inertiajs/inertia"; // Correct import for Inertia.js
+import { Head, router, usePage } from "@inertiajs/react";
 import { useState } from "react";
 
 export default function Newsletter() {
@@ -10,7 +9,7 @@ export default function Newsletter() {
     const handleDelete = (id) => {
         // Show confirmation dialog
         if (window.confirm("Are you sure you want to delete this signup?")) {
-            Inertia.delete(`/dashboard/newsletter/${id}`, {
+            router.delete(`/dashboard/newsletter/${id}`, {
                 onBefore: () => setDeleting(id), // Set the deleting state to the current id
                 onFinish: () => setDeleting(null), // Reset after deletion
             });

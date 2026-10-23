@@ -42,7 +42,7 @@
 
         <script type="application/ld+json">
         {
-        "@context": "https://schema.org",
+        "@@context": "https://schema.org",
         "@type": "Bakery",
         "name": "Bătrânul Osu",
         "image": "https://www.batranul-osu.ro/images/og-image.jpg",

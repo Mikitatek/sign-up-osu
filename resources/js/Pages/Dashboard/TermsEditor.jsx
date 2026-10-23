@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { Inertia } from "@inertiajs/inertia";
-import { usePage } from "@inertiajs/react";
+import { router, usePage } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head } from "@inertiajs/react";
 import ReactQuill from "react-quill";
@@ -34,7 +33,7 @@ export default function TermsEditor() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        Inertia.post(route("dashboard.terms.update"), { terms: content });
+        router.post(route("dashboard.terms.update"), { terms: content });
     };
 
     return (
