@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -608,28 +609,48 @@ class JeReportController extends Controller
         $sheet = $spreadsheet->createSheet();
         $sheet->setTitle('Produse pe luni');
         $months = array_keys($monthAgg);
-        $sheet->fromArray(array_merge(['Produs'], array_map($monthName, $months), ['Total']));
+        $sheet->fromArray(array_merge(['Produs'], array_map($monthName, $months), ['Total buc.', 'Valoare totală (lei)']));
         $perMonth = [];
+        $perValue = [];
         $jeReport->items()
             ->join('je_receipts', 'je_items.je_receipt_id', '=', 'je_receipts.id')
-            ->selectRaw('je_items.name as name, SUBSTR(je_receipts.receipt_date, 1, 7) as ym, SUM(je_items.qty) as qty')
+            ->selectRaw('je_items.name as name, SUBSTR(je_receipts.receipt_date, 1, 7) as ym, SUM(je_items.qty) as qty, SUM(je_items.value) as value')
             ->groupBy('je_items.name', 'ym')
             ->get()
-            ->each(function ($r) use (&$perMonth) {
+            ->each(function ($r) use (&$perMonth, &$perValue) {
                 $perMonth[$r->name][$r->ym] = (int) $r->qty;
+                $perValue[$r->name] = ($perValue[$r->name] ?? 0) + (float) $r->value;
             });
         uksort($perMonth, fn ($a, $b) => array_sum($perMonth[$b]) <=> array_sum($perMonth[$a]) ?: strcmp($a, $b));
         $prow = 2;
         foreach ($perMonth as $name => $qtys) {
             $sheet->setCellValueExplicit("A{$prow}", $name, DataType::TYPE_STRING);
             $sheet->fromArray(
-                array_merge(array_map(fn ($ym) => $qtys[$ym] ?? 0, $months), [array_sum($qtys)]),
+                array_merge(
+                    array_map(fn ($ym) => $qtys[$ym] ?? 0, $months),
+                    [array_sum($qtys), round($perValue[$name], 2)],
+                ),
                 null,
                 "B{$prow}",
                 true,
             );
             $prow++;
         }
+        // grand total row: pieces per month, all pieces, all value
+        $monthTotals = array_map(
+            fn ($ym) => array_sum(array_map(fn ($q) => $q[$ym] ?? 0, $perMonth)),
+            $months,
+        );
+        $sheet->setCellValue("A{$prow}", 'TOTAL');
+        $sheet->fromArray(
+            array_merge($monthTotals, [array_sum($monthTotals), round(array_sum($perValue), 2)]),
+            null,
+            "B{$prow}",
+            true,
+        );
+        $sheet->getStyle("A{$prow}:{$sheet->getHighestColumn()}{$prow}")->getFont()->setBold(true);
+        $valueCol = Coordinate::stringFromColumnIndex(count($months) + 3);
+        $sheet->getStyle("{$valueCol}2:{$valueCol}{$prow}")->getNumberFormat()->setFormatCode($moneyFormat);
         $sheet->freezePane('B2');
 
         // Bonuri

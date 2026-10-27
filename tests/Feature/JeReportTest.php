@@ -245,14 +245,16 @@ class JeReportTest extends TestCase
         unlink($path);
 
         $this->assertNotNull($sheet);
-        $rows = $sheet->toArray();
+        $rows = $sheet->toArray(null, true, false);
         $this->assertSame('Produs', $rows[0][0]);
-        $this->assertSame('Total', end($rows[0]));
+        $this->assertSame(['Total buc.', 'Valoare totală (lei)'], array_slice($rows[0], -2));
         $byName = collect(array_slice($rows, 1))->keyBy(0)->all();
-        $this->assertSame(
-            (int) JeItem::where('name', 'PRODUS A')->sum('qty'),
-            (int) end($byName['PRODUS A']),
-        );
+        [$qty, $value] = array_slice($byName['PRODUS A'], -2);
+        $this->assertSame((int) JeItem::where('name', 'PRODUS A')->sum('qty'), (int) $qty);
+        $this->assertEqualsWithDelta((float) JeItem::where('name', 'PRODUS A')->sum('value'), (float) $value, 0.001);
+        [$allQty, $allValue] = array_slice($byName['TOTAL'], -2);
+        $this->assertSame((int) JeItem::sum('qty'), (int) $allQty);
+        $this->assertEqualsWithDelta((float) JeItem::sum('value'), (float) $allValue, 0.001);
     }
 
     public function test_destroy_removes_report_and_children(): void
