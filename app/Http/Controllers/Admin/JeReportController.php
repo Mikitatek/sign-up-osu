@@ -605,52 +605,60 @@ class JeReportController extends Controller
         }
         $sheet->getStyle('C2:C'.max(2, $prow - 1))->getNumberFormat()->setFormatCode($moneyFormat);
 
-        // Produse pe luni: pieces sold per product, one column per month
+        // Produse pe luni: pieces and value sold per product, a pair of columns per month
         $sheet = $spreadsheet->createSheet();
         $sheet->setTitle('Produse pe luni');
         $months = array_keys($monthAgg);
-        $sheet->fromArray(array_merge(['Produs'], array_map($monthName, $months), ['Total buc.', 'Valoare totală (lei)']));
+        $header = ['Produs'];
+        foreach ($months as $ym) {
+            $header[] = $monthName($ym).' buc.';
+            $header[] = $monthName($ym).' (lei)';
+        }
+        $sheet->fromArray(array_merge($header, ['Total buc.', 'Valoare totală (lei)']));
         $perMonth = [];
-        $perValue = [];
+        $perMonthValue = [];
         $jeReport->items()
             ->join('je_receipts', 'je_items.je_receipt_id', '=', 'je_receipts.id')
             ->selectRaw('je_items.name as name, SUBSTR(je_receipts.receipt_date, 1, 7) as ym, SUM(je_items.qty) as qty, SUM(je_items.value) as value')
             ->groupBy('je_items.name', 'ym')
             ->get()
-            ->each(function ($r) use (&$perMonth, &$perValue) {
+            ->each(function ($r) use (&$perMonth, &$perMonthValue) {
                 $perMonth[$r->name][$r->ym] = (int) $r->qty;
-                $perValue[$r->name] = ($perValue[$r->name] ?? 0) + (float) $r->value;
+                $perMonthValue[$r->name][$r->ym] = (float) $r->value;
             });
         uksort($perMonth, fn ($a, $b) => array_sum($perMonth[$b]) <=> array_sum($perMonth[$a]) ?: strcmp($a, $b));
+        $pairRow = function (callable $qty, callable $value) use ($months) {
+            $cells = [];
+            foreach ($months as $ym) {
+                $cells[] = $qty($ym);
+                $cells[] = round($value($ym), 2);
+            }
+            $totalQty = array_sum(array_map($qty, $months));
+            $totalValue = array_sum(array_map($value, $months));
+
+            return array_merge($cells, [$totalQty, round($totalValue, 2)]);
+        };
         $prow = 2;
         foreach ($perMonth as $name => $qtys) {
             $sheet->setCellValueExplicit("A{$prow}", $name, DataType::TYPE_STRING);
-            $sheet->fromArray(
-                array_merge(
-                    array_map(fn ($ym) => $qtys[$ym] ?? 0, $months),
-                    [array_sum($qtys), round($perValue[$name], 2)],
-                ),
-                null,
-                "B{$prow}",
-                true,
-            );
+            $sheet->fromArray($pairRow(
+                fn ($ym) => $qtys[$ym] ?? 0,
+                fn ($ym) => $perMonthValue[$name][$ym] ?? 0.0,
+            ), null, "B{$prow}", true);
             $prow++;
         }
-        // grand total row: pieces per month, all pieces, all value
-        $monthTotals = array_map(
-            fn ($ym) => array_sum(array_map(fn ($q) => $q[$ym] ?? 0, $perMonth)),
-            $months,
-        );
+        // grand total row: all products, per month and for the whole period
         $sheet->setCellValue("A{$prow}", 'TOTAL');
-        $sheet->fromArray(
-            array_merge($monthTotals, [array_sum($monthTotals), round(array_sum($perValue), 2)]),
-            null,
-            "B{$prow}",
-            true,
-        );
+        $sheet->fromArray($pairRow(
+            fn ($ym) => array_sum(array_map(fn ($q) => $q[$ym] ?? 0, $perMonth)),
+            fn ($ym) => array_sum(array_map(fn ($v) => $v[$ym] ?? 0.0, $perMonthValue)),
+        ), null, "B{$prow}", true);
         $sheet->getStyle("A{$prow}:{$sheet->getHighestColumn()}{$prow}")->getFont()->setBold(true);
-        $valueCol = Coordinate::stringFromColumnIndex(count($months) + 3);
-        $sheet->getStyle("{$valueCol}2:{$valueCol}{$prow}")->getNumberFormat()->setFormatCode($moneyFormat);
+        // value columns: every second column after Produs (C, E, ...), plus the final total
+        for ($i = 0; $i <= count($months); $i++) {
+            $col = Coordinate::stringFromColumnIndex(3 + 2 * $i);
+            $sheet->getStyle("{$col}2:{$col}{$prow}")->getNumberFormat()->setFormatCode($moneyFormat);
+        }
         $sheet->freezePane('B2');
 
         // Bonuri

@@ -252,6 +252,12 @@ class JeReportTest extends TestCase
         [$qty, $value] = array_slice($byName['PRODUS A'], -2);
         $this->assertSame((int) JeItem::where('name', 'PRODUS A')->sum('qty'), (int) $qty);
         $this->assertEqualsWithDelta((float) JeItem::where('name', 'PRODUS A')->sum('value'), (float) $value, 0.001);
+        $this->assertStringEndsWith(' buc.', $rows[0][1]);
+        $this->assertStringEndsWith(' (lei)', $rows[0][2]);
+        // monthly value columns (C, E, ...) add up to the product's total value
+        $monthCells = array_slice($byName['PRODUS A'], 1, -2);
+        $monthValues = array_filter($monthCells, fn ($k) => $k % 2 === 1, ARRAY_FILTER_USE_KEY);
+        $this->assertEqualsWithDelta((float) $value, array_sum($monthValues), 0.001);
         [$allQty, $allValue] = array_slice($byName['TOTAL'], -2);
         $this->assertSame((int) JeItem::sum('qty'), (int) $allQty);
         $this->assertEqualsWithDelta((float) JeItem::sum('value'), (float) $allValue, 0.001);
