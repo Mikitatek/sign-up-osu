@@ -2,11 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Models\JeItem;
+use App\Models\JeReceipt;
 use App\Models\JeReport;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Tests\TestCase;
 
 class JeReportTest extends TestCase
@@ -231,10 +234,25 @@ class JeReportTest extends TestCase
         $this->upload($admin, $this->fixture());
         $report = JeReport::first();
 
-        $this->actingAs($admin)
+        $response = $this->actingAs($admin)
             ->get(route('dashboard.je-reports.export', $report))
             ->assertOk()
             ->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+        $path = tempnam(sys_get_temp_dir(), 'je').'.xlsx';
+        file_put_contents($path, $response->streamedContent());
+        $sheet = IOFactory::load($path)->getSheetByName('Produse pe luni');
+        unlink($path);
+
+        $this->assertNotNull($sheet);
+        $rows = $sheet->toArray();
+        $this->assertSame('Produs', $rows[0][0]);
+        $this->assertSame('Total', end($rows[0]));
+        $byName = collect(array_slice($rows, 1))->keyBy(0)->all();
+        $this->assertSame(
+            (int) JeItem::where('name', 'PRODUS A')->sum('qty'),
+            (int) end($byName['PRODUS A']),
+        );
     }
 
     public function test_destroy_removes_report_and_children(): void
@@ -248,7 +266,7 @@ class JeReportTest extends TestCase
             ->assertRedirect(route('dashboard.je-reports.index'));
 
         $this->assertSame(0, JeReport::count());
-        $this->assertSame(0, \App\Models\JeReceipt::count());
-        $this->assertSame(0, \App\Models\JeItem::count());
+        $this->assertSame(0, JeReceipt::count());
+        $this->assertSame(0, JeItem::count());
     }
 }

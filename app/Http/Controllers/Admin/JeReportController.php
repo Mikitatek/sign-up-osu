@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -596,12 +597,40 @@ class JeReportController extends Controller
         $prow = 2;
         foreach ($products as $p) {
             // explicit string type so a name can never be interpreted as a formula
-            $sheet->setCellValueExplicit("A{$prow}", $p->name, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit("A{$prow}", $p->name, DataType::TYPE_STRING);
             $sheet->setCellValue("B{$prow}", (int) $p->qty);
             $sheet->setCellValue("C{$prow}", round((float) $p->value, 2));
             $prow++;
         }
         $sheet->getStyle('C2:C'.max(2, $prow - 1))->getNumberFormat()->setFormatCode($moneyFormat);
+
+        // Produse pe luni: pieces sold per product, one column per month
+        $sheet = $spreadsheet->createSheet();
+        $sheet->setTitle('Produse pe luni');
+        $months = array_keys($monthAgg);
+        $sheet->fromArray(array_merge(['Produs'], array_map($monthName, $months), ['Total']));
+        $perMonth = [];
+        $jeReport->items()
+            ->join('je_receipts', 'je_items.je_receipt_id', '=', 'je_receipts.id')
+            ->selectRaw('je_items.name as name, SUBSTR(je_receipts.receipt_date, 1, 7) as ym, SUM(je_items.qty) as qty')
+            ->groupBy('je_items.name', 'ym')
+            ->get()
+            ->each(function ($r) use (&$perMonth) {
+                $perMonth[$r->name][$r->ym] = (int) $r->qty;
+            });
+        uksort($perMonth, fn ($a, $b) => array_sum($perMonth[$b]) <=> array_sum($perMonth[$a]) ?: strcmp($a, $b));
+        $prow = 2;
+        foreach ($perMonth as $name => $qtys) {
+            $sheet->setCellValueExplicit("A{$prow}", $name, DataType::TYPE_STRING);
+            $sheet->fromArray(
+                array_merge(array_map(fn ($ym) => $qtys[$ym] ?? 0, $months), [array_sum($qtys)]),
+                null,
+                "B{$prow}",
+                true,
+            );
+            $prow++;
+        }
+        $sheet->freezePane('B2');
 
         // Bonuri
         $sheet = $spreadsheet->createSheet();
@@ -640,7 +669,7 @@ class JeReportController extends Controller
                 $sheet->fromArray($rows, null, "A{$row}");
                 // journal-sourced free text goes in as explicit strings only
                 foreach ($textCells as $cell => $value) {
-                    $sheet->setCellValueExplicit($cell, $value, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+                    $sheet->setCellValueExplicit($cell, $value, DataType::TYPE_STRING);
                 }
                 $row += count($rows);
             });
