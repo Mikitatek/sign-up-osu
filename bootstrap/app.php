@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Translation\TranslationServiceProvider;
 
@@ -11,11 +14,11 @@ $app = Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function ($middleware) {
         $middleware->alias([
-            'admin' => App\Http\Middleware\AdminMiddleware::class,
+            'admin' => AdminMiddleware::class,
         ]);
         $middleware->web(append: [
-            App\Http\Middleware\HandleInertiaRequests::class,
-            App\Http\Middleware\SecurityHeaders::class,
+            HandleInertiaRequests::class,
+            SecurityHeaders::class,
         ]);
     })
     ->withExceptions(function ($exceptions) {

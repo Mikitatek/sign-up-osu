@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\MenuTemplate;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -36,7 +37,7 @@ class ProductController extends Controller
         return Inertia::render('Dashboard/Products', [
             'products' => $products,
             'categories' => Product::select('category')->distinct()->orderBy('category')->pluck('category'),
-            'templates' => \App\Models\MenuTemplate::orderByDesc('created_at')->get()
+            'templates' => MenuTemplate::orderByDesc('created_at')->get()
                 ->map(fn ($t) => [
                     'id' => $t->id,
                     'name' => $t->name,

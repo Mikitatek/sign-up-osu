@@ -68,7 +68,7 @@ Route::get('/api/stripe/success', function (Request $request) {
         }
 
         return response()->json(['success' => true]);
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         Log::error('Stripe Confirm Error: '.$e->getMessage());
 
         return response()->json(['success' => false, 'error' => 'Nu am putut confirma plata.'], 500);
