@@ -92,7 +92,16 @@ export default function ShopPage() {
             : "Programul de livrări s-a încheiat pentru azi. Revenim mâine la 11:00."
         : "";
 
-    const today = new Date().toISOString().split("T")[0];
+    // Data locală: toISOString() ar da ziua UTC, adică ieri imediat după miezul nopții.
+    const today = [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, "0"),
+        String(now.getDate()).padStart(2, "0"),
+    ].join("-");
+
+    // Comenzile programate merg și în afara programului; doar „cât mai curând” nu.
+    const isScheduledOrder = /^\d{2}:\d{2}$/.test(formData.scheduledTime);
+    const canOrderNow = isWorkingHours || isScheduledOrder;
 
     // Telefon românesc - începe cu 07 și are 10 cifre
     const phoneRegex = /^07\d{8}$/;
@@ -800,13 +809,15 @@ export default function ShopPage() {
 
     function generateTimeOptionsDynamic(selectedDate) {
         const now = new Date();
-        const todayDateString = now.toISOString().split("T")[0];
 
         // dacă e azi
-        if (selectedDate === todayDateString) {
+        if (selectedDate === today) {
             const nextHour = now.getHours() + 2;
             const startHour = Math.min(Math.max(nextHour, 10), 21);
-            return generateTimeOptions(startHour, 21, 30);
+            const currentTime = now.toTimeString().slice(0, 5);
+            return generateTimeOptions(startHour, 21, 30).filter(
+                (time) => time > currentTime,
+            );
         }
 
         // altfel default 10-21
@@ -1888,6 +1899,10 @@ export default function ShopPage() {
                                         onChange={(e) =>
                                             setFormData({
                                                 ...formData,
+                                                // câmpul arată azi chiar dacă data n-a fost schimbată
+                                                scheduledDate:
+                                                    formData.scheduledDate ||
+                                                    today,
                                                 scheduledTime: e.target.value,
                                             })
                                         }
@@ -1954,9 +1969,10 @@ export default function ShopPage() {
                                 />
                             </div>
 
-                            {!isWorkingHours && (
+                            {!canOrderNow && (
                                 <p className="text-red-600 font-semibold text-center mb-2">
-                                    {workingMessage}
+                                    {workingMessage} Poți programa livrarea
+                                    alegând o zi și o oră.
                                 </p>
                             )}
 
@@ -1970,13 +1986,13 @@ export default function ShopPage() {
                             <button
                                 onClick={handleCheckout}
                                 disabled={
-                                    !isWorkingHours ||
+                                    !canOrderNow ||
                                     cartItems.length === 0 ||
                                     !isPhoneValid ||
                                     !isEmailValid
                                 }
                                 className={`w-full mt-4 py-2 rounded font-bold transition ${
-                                    !isWorkingHours ||
+                                    !canOrderNow ||
                                     cartItems.length === 0 ||
                                     !isPhoneValid ||
                                     !isEmailValid
