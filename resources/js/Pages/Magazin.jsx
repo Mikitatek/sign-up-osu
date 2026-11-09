@@ -82,11 +82,11 @@ export default function ShopPage() {
     const isAfterOpening =
         currentHour > 10 || (currentHour === 11 && currentMinute >= 0);
     const isBeforeClosing =
-        currentHour < 23 || (currentHour === 23 && currentMinute <= 15);
+        currentHour < 23 || (currentHour === 23 && currentMinute <= 45);
 
     const isWorkingHours = isAfterOpening && isBeforeClosing;
 
-    // ultima oră la care se poate programa o livrare (din 30 în 30 de minute)
+    // livrările programate merg din 30 în 30 de minute, ultima la 23:30
     const LAST_SLOT_HOUR = 23;
 
     const workingMessage = !isWorkingHours
@@ -199,7 +199,7 @@ export default function ShopPage() {
         const options = [];
         for (let h = startHour; h <= endHour; h++) {
             options.push(`${h.toString().padStart(2, "0")}:00`);
-            if (stepMinutes === 30 && h < endHour) {
+            if (stepMinutes === 30) {
                 options.push(`${h.toString().padStart(2, "0")}:30`);
             }
         }
