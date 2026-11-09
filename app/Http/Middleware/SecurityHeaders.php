@@ -29,7 +29,7 @@ class SecurityHeaders
                     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
                     "font-src 'self' data: https://fonts.gstatic.com",
                     "img-src 'self' data: blob: https://*.stripe.com https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.g.doubleclick.net https://analytics.tiktok.com https://*.tiktok.com",
-                    "connect-src 'self' https://api.stripe.com https://checkout.stripe.com https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://api.emailjs.com https://analytics.tiktok.com https://*.tiktok.com",
+                    "connect-src 'self' https://api.stripe.com https://checkout.stripe.com https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://api.emailjs.com https://analytics.tiktok.com https://*.tiktok.com https://www.google.com/recaptcha/",
                     'frame-src https://js.stripe.com https://checkout.stripe.com https://hooks.stripe.com https://www.google.com',
                     "object-src 'none'",
                     "base-uri 'self'",
