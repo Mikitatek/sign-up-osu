@@ -66,7 +66,9 @@ export default function ShopPage() {
     });
 
     const [formErrors, setFormErrors] = useState({});
-    const [captchaVerified, setCaptchaVerified] = useState(false);
+    const [captchaToken, setCaptchaToken] = useState(null);
+    const captchaRef = useRef(null);
+    const placingOrder = useRef(false);
 
     const STICKY_HEADER_HEIGHT = 100;
 
@@ -507,7 +509,14 @@ export default function ShopPage() {
 
     const closeCart = () => {
         setIsCartOpen(false);
+        setCaptchaToken(null); // widgetul dispare odată cu modalul
         setTimeout(() => setShowCart(false), 300); // așteptăm animatia
+    };
+
+    // Un token merge o singură dată, deci după un eșec trebuie bifat din nou.
+    const resetCaptcha = () => {
+        captchaRef.current?.reset();
+        setCaptchaToken(null);
     };
 
     const updateQuantity = (cartKey, delta) => {
@@ -571,6 +580,82 @@ export default function ShopPage() {
         }
     };
 
+    // Prețurile, discountul și transportul se calculează pe server, din
+    // catalogul local — aici trimitem doar produsele alese.
+    const postOrder = (url) =>
+        fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+                "X-CSRF-TOKEN": document
+                    .querySelector('meta[name="csrf-token"]')
+                    .getAttribute("content"),
+            },
+            body: JSON.stringify({
+                items: cartItems.map((item) => ({
+                    product_id: item.id,
+                    option: item.option || "-",
+                    quantity: item.qty,
+                })),
+                context: "magazin",
+                promoCode: promoCode.trim(),
+                orderData: formData,
+                recaptchaToken: captchaToken,
+            }),
+        });
+
+    // Serverul salvează comanda și trimite emailurile.
+    const placeCashOrder = async () => {
+        const fail = (message) => {
+            resetCaptcha();
+            setFormErrors({
+                general:
+                    message ||
+                    "Nu am putut trimite comanda. Te rugăm să încerci din nou.",
+            });
+        };
+
+        try {
+            const response = await postOrder("/place-cash-order");
+            if (response.ok) {
+                showOrderPlaced();
+            } else {
+                const data = await response.json().catch(() => ({}));
+                fail(data.error);
+            }
+        } catch (error) {
+            console.error("Cash order error:", error);
+            fail();
+        }
+    };
+
+    const startCardPayment = async () => {
+        const fail = (message) => {
+            resetCaptcha();
+            setFormErrors({
+                general:
+                    message ||
+                    "Nu am putut porni plata. Te rugăm să încerci din nou.",
+            });
+        };
+
+        try {
+            const response = await postOrder("/create-checkout-session");
+
+            const session = await response.json();
+            if (session.id) {
+                const stripe = await stripePromise;
+                stripe.redirectToCheckout({ sessionId: session.id });
+            } else {
+                fail(session.error);
+            }
+        } catch (error) {
+            console.error("Checkout error:", error);
+            fail();
+        }
+    };
+
     const handleCheckout = async () => {
         if (
             !formData.name ||
@@ -587,7 +672,7 @@ export default function ShopPage() {
             return;
         }
 
-        if (!captchaVerified) {
+        if (!captchaToken) {
             setFormErrors({
                 general: "Te rugăm să confirmi că nu ești robot.",
             });
@@ -605,57 +690,18 @@ export default function ShopPage() {
             return;
         }
 
-        if (formData.paymentMethod === "cash") {
-            sendOrderEmail();
-            return;
-        }
+        // Al doilea click ar refolosi tokenul și ar fi refuzat.
+        if (placingOrder.current) return;
+        placingOrder.current = true;
 
         try {
-            // Prețurile, discountul și transportul se calculează pe server,
-            // din prețurile reale Stripe — aici trimitem doar produsele alese.
-            const response = await fetch("/create-checkout-session", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": document
-                        .querySelector('meta[name="csrf-token"]')
-                        .getAttribute("content"),
-                },
-                body: JSON.stringify({
-                    items: cartItems.map((item) => ({
-                        product_id: item.id,
-                        option: item.option || "-",
-                        quantity: item.qty,
-                    })),
-                    context: "magazin",
-                    promoCode: promoCode.trim(),
-                    orderData: formData,
-                }),
-            });
-
-            localStorage.setItem(
-                "osu_order_data",
-                JSON.stringify({
-                    formData,
-                    items: cartItems,
-                    discount,
-                    total,
-                }),
-            );
-
-            const session = await response.json();
-            if (session.id) {
-                const stripe = await stripePromise;
-                stripe.redirectToCheckout({ sessionId: session.id });
+            if (formData.paymentMethod === "cash") {
+                await placeCashOrder();
             } else {
-                setFormErrors({
-                    general:
-                        session.error ||
-                        "Nu am putut porni plata. Te rugăm să încerci din nou.",
-                });
+                await startCardPayment();
             }
-        } catch (error) {
-            console.error("Checkout error:", error);
+        } finally {
+            placingOrder.current = false;
         }
     };
 
@@ -667,64 +713,15 @@ export default function ShopPage() {
         );
     };
 
-    const sendOrderEmail = () => {
-        const emailData = {
-            // toate datele tale rămân aici
-            name: formData.name,
-            phone: formData.phone,
-            email: formData.email,
-            deliveryType: formData.deliveryType,
-            paymentMethod: formData.paymentMethod,
-            street: formData.street,
-            apartment: formData.apartment,
-            staircase: formData.staircase,
-            floor: formData.floor,
-            city: formData.city,
-            notes: formData.notes,
-            scheduledDate: formData.scheduledDate || "Azi",
-            scheduledTime: formData.scheduledTime || "Cât mai curând",
-            items: cartItems
-                .map((item) => {
-                    const originalTotal = (item.qty * item.price) / 100;
-                    const discountedTotal =
-                        originalTotal * ((100 - discount) / 100);
+    const showOrderPlaced = () => {
+        setOrderSuccessMessage("✅ Comanda a fost trimisă cu succes!");
+        localStorage.removeItem("osu_cart");
+        closeCart(false);
 
-                    if (discount > 0) {
-                        return `${item.name} (${item.option}) x ${
-                            item.qty
-                        } = ${discountedTotal.toFixed(
-                            2,
-                        )} RON (redus din ${originalTotal.toFixed(
-                            2,
-                        )} RON, -${discount}%)`;
-                    } else {
-                        return `${item.name} (${item.option}) x ${
-                            item.qty
-                        } = ${originalTotal.toFixed(2)} RON`;
-                    }
-                })
-                .join("\n"),
-            total: (total / 100).toFixed(2),
-        };
-
-        emailjs
-            .send(
-                "service_wz043lj",
-                "template_fx2v89x",
-                emailData,
-                "xweu0E67NPFqknP_c",
-            )
-            .then(() => {
-                setOrderSuccessMessage("✅ Comanda a fost trimisă cu succes!");
-                localStorage.removeItem("osu_cart");
-                closeCart(false);
-
-                setTimeout(() => {
-                    setOrderSuccessMessage("");
-                    window.location.reload();
-                }, 4000); // mesajul dispare după 4 secunde
-            })
-            .catch((error) => console.error("EmailJS error:", error));
+        setTimeout(() => {
+            setOrderSuccessMessage("");
+            window.location.reload();
+        }, 4000); // mesajul dispare după 4 secunde
     };
 
     const handleCategoryClick = (cat) => {
@@ -1063,13 +1060,13 @@ export default function ShopPage() {
                     </div>
                     <div className="md:col-span-3 space-y-10">
                         {/* Delivery info */}
-                        <div className="grid grid-cols-1 divide-x divide-gray-300 mt-6 text-center font-bold text-gray-400 px-4 md:px-0">
-                            {/* <div className="flex flex-col items-center justify-center text-sm">
+                        <div className="grid grid-cols-2 divide-x divide-gray-300 mt-6 text-center font-bold text-gray-400 px-4 md:px-0">
+                            <div className="flex flex-col items-center justify-center text-sm">
                                 <span className="text-lg text-black">
                                     18.00 RON
                                 </span>
                                 <span className="text-xs">livrare</span>
-                            </div> */}
+                            </div>
                             <div className="flex flex-col items-center justify-center text-sm">
                                 <span className="text-lg text-black">
                                     45–55
@@ -1077,12 +1074,12 @@ export default function ShopPage() {
                                 <span className="text-xs">min</span>
                             </div>
                         </div>
-                        {/* <div>
+                        <div>
                             <h1 className="text-sm md:text-md text-center mt-6 px-4 md:px-0">
                                 Livrare în: Brașov, Ghimbav, Cristian, Sânpetru,
                                 Stupini și Hărman
                             </h1>
-                        </div> */}
+                        </div>
                         {/* Scrollable promo cards */}
                         <div className="mt-6 overflow-x-auto scrollbar-hide px-4 md:px-0">
                             <div className="flex space-x-2 md:space-x-4 md:px-0">
@@ -1095,15 +1092,15 @@ export default function ShopPage() {
                                     />
                                     <div className="text-left">
                                         <p className="text-sm font-bold text-gray-800">
-                                            Comenzi telefonice
+                                            RON 0.00 livrare
                                         </p>
                                         <p className="text-sm text-gray-700">
-                                            0723 758 663
+                                            la comenzile de peste 80 de lei
                                         </p>
                                     </div>
                                 </div>
 
-                                {/* Card 2: Reducere cu cod */}
+                                {/* Card 2: Comenzi telefonice */}
                                 <div className="flex items-center bg-gray-100 rounded-2xl p-4 md:min-w-[310px] min-w-[260px] relative pl-24">
                                     <img
                                         src="/img/leaf.png" // <- înlocuiește cu calea reală
@@ -1112,11 +1109,10 @@ export default function ShopPage() {
                                     />
                                     <div className="text-left">
                                         <p className="text-sm font-bold text-gray-800">
-                                            Despre Comenzi
+                                            Comenzi telefonice
                                         </p>
                                         <p className="text-sm text-gray-700">
-                                            Acceptam doar <br />
-                                            Comenzi telefonice
+                                            0723 758 663
                                         </p>
                                     </div>
                                 </div>
@@ -1222,7 +1218,7 @@ export default function ShopPage() {
                                                                     )}{" "}
                                                                     RON
                                                                 </span>
-                                                                {/* <button
+                                                                <button
                                                                     onClick={(
                                                                         e,
                                                                     ) => {
@@ -1237,7 +1233,7 @@ export default function ShopPage() {
                                                                     className="bg-emerald-800 text-white px-4 py-2 text-sm rounded hover:bg-red-500 font-bold hidden md:block"
                                                                 >
                                                                     Adaugă
-                                                                </button> */}
+                                                                </button>
                                                             </div>
                                                         </div>
 
@@ -1254,7 +1250,7 @@ export default function ShopPage() {
                                                                     loading="lazy"
                                                                     className="w-full md:h-full md:object-cover object-contain rounded-md"
                                                                 />
-                                                                {/* <button
+                                                                <button
                                                                     onClick={(
                                                                         e,
                                                                     ) => {
@@ -1269,7 +1265,7 @@ export default function ShopPage() {
                                                                     className="absolute bottom-0 md:hidden right-0 bg-emerald-800 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg hover:bg-red-500 shadow"
                                                                 >
                                                                     +
-                                                                </button> */}
+                                                                </button>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1480,19 +1476,18 @@ export default function ShopPage() {
                         </p>
                         <button
                             onClick={() => {
-                                // addToCart(selectedProduct, selectedOptions);
+                                addToCart(selectedProduct, selectedOptions);
                                 handleClose();
                             }}
                             className="w-full bg-emerald-800 text-white py-2 rounded hover:bg-red-500 font-bold"
                         >
-                            {/* Adaugă în coș */}
-                            Închide
+                            Adaugă în coș
                         </button>
                     </div>
                 </div>
             )}
 
-            {/* {orderSuccessMessage && (
+            {orderSuccessMessage && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
                     <div className="bg-white text-emerald-800 text-xl font-bold px-6 py-4 rounded-lg shadow-xl text-center max-w-md w-full">
                         {orderSuccessMessage}
@@ -1532,7 +1527,7 @@ export default function ShopPage() {
                                 <>
                                     {/* <pre className="text-xs text-gray-400 overflow-x-auto">
                                     {JSON.stringify(cartItems, null, 2)}
-                                </pre> *
+                                </pre> */}
                                     <ul className="mb-4">
                                         {cartItems.map((item) => {
                                             const fullPrice =
@@ -1950,11 +1945,12 @@ export default function ShopPage() {
                                 }}
                             >
                                 <ReCAPTCHA
+                                    ref={captchaRef}
                                     //live
                                     sitekey="6LeqX14rAAAAAI4xzmtc7bylyMAbvVwDPJvSBi2l"
                                     //test
                                     // sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
-                                    onChange={() => setCaptchaVerified(true)}
+                                    onChange={setCaptchaToken}
                                 />
                             </div>
 
@@ -1993,7 +1989,7 @@ export default function ShopPage() {
                         </div>
                     </div>
                 </div>
-            )} */}
+            )}
         </SiteLayout>
     );
 }

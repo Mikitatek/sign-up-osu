@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from "react";
-import emailjs from "@emailjs/browser";
 import SiteLayout from "@/Layouts/SiteLayout";
 
 export default function Success() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [emailSent, setEmailSent] = useState(false);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -21,74 +19,7 @@ export default function Success() {
             .then((res) => res.json())
             .then((data) => {
                 if (data.success) {
-                    const local = localStorage.getItem("osu_order_data");
-                    if (!local) {
-                        setError("Datele comenzii lipsesc.");
-                        return;
-                    }
-
-                    const order = JSON.parse(local);
-
-                    const emailData = {
-                        name: order.formData.name,
-                        phone: order.formData.phone,
-                        email: order.formData.email,
-                        deliveryType: order.formData.deliveryType,
-                        paymentMethod: order.formData.paymentMethod,
-                        street: order.formData.street,
-                        apartment: order.formData.apartment,
-                        staircase: order.formData.staircase,
-                        floor: order.formData.floor,
-                        city: order.formData.city,
-                        notes: order.formData.notes,
-                        scheduledDate: order.formData.scheduledDate || "azi",
-                        scheduledTime:
-                            order.formData.scheduledTime ||
-                            "Cât de repede posibil",
-                        items: order.items
-                            .map((item) => {
-                                const originalTotal =
-                                    (item.qty * item.price) / 100;
-                                const discountedTotal =
-                                    originalTotal *
-                                    ((100 - order.discount) / 100);
-
-                                if (order.discount > 0) {
-                                    return `${item.name} (${item.option}) x ${
-                                        item.qty
-                                    } = ${discountedTotal.toFixed(
-                                        2
-                                    )} RON (redus din ${originalTotal.toFixed(
-                                        2
-                                    )} RON, -${order.discount}%)`;
-                                } else {
-                                    return `${item.name} (${item.option}) x ${
-                                        item.qty
-                                    } = ${originalTotal.toFixed(2)} RON`;
-                                }
-                            })
-                            .join("\n"),
-                        total: (order.total / 100).toFixed(2),
-                    };
-
-                    emailjs
-                        .send(
-                            "service_wz043lj",
-                            "template_fx2v89x",
-                            emailData,
-                            "xweu0E67NPFqknP_c"
-                        )
-                        .then(
-                            () => {
-                                setEmailSent(true);
-                                localStorage.removeItem("osu_cart");
-                                localStorage.removeItem("osu_order_data");
-                            },
-                            (err) => {
-                                console.error("EmailJS error:", err);
-                                setError("Eroare la trimiterea emailului.");
-                            }
-                        );
+                    localStorage.removeItem("osu_cart");
                 } else {
                     setError(data.error || "Plata nu a fost confirmată.");
                 }
@@ -131,11 +62,9 @@ export default function Success() {
                                 Mulțumim pentru comanda ta. Ne apucăm de treabă
                                 imediat! 🥨
                             </p>
-                            {emailSent && (
-                                <p className="text-sm text-gray-500">
-                                    Confirmarea a fost trimisă pe email.
-                                </p>
-                            )}
+                            <p className="text-sm text-gray-500">
+                                Vei primi confirmarea pe email.
+                            </p>
                         </>
                     )}
                     <a

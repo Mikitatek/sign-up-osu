@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\JeReportController;
 use App\Http\Controllers\Admin\MenuTemplateController;
+use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\LegalController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\MagazinController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TermsController;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
@@ -50,6 +52,9 @@ Route::get('/stripe-products', [MagazinController::class, 'products'])
 Route::post('/create-checkout-session', [CheckoutController::class, 'createSession'])
     ->middleware('throttle:30,1');
 
+Route::post('/place-cash-order', [CheckoutController::class, 'placeCashOrder'])
+    ->middleware('throttle:5,1');
+
 Route::post('/validate-promo', [CheckoutController::class, 'validatePromo'])
     ->middleware('throttle:20,1');
 
@@ -66,6 +71,8 @@ Route::get('/api/stripe/success', function (Request $request) {
         if ($session->payment_status !== 'paid') {
             return response()->json(['success' => false, 'error' => 'Payment not confirmed'], 400);
         }
+
+        Order::confirmStripePayment($session->id, (int) $session->amount_total);
 
         return response()->json(['success' => true]);
     } catch (Exception $e) {
@@ -95,6 +102,10 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard');
     })->name('dashboard');
+
+    // Comenzi online
+    Route::get('/dashboard/comenzi', [OrderController::class, 'index'])->name('dashboard.orders');
+    Route::post('/dashboard/comenzi/{order}/accept', [OrderController::class, 'accept'])->name('dashboard.orders.accept');
 
     // Newsletter
     Route::get('/dashboard/newsletter', [NewsletterController::class, 'index'])->name('dashboard.newsletter');

@@ -61,6 +61,47 @@ To test webhooks locally once they exist (platform plan, Phase 2), use the
 > **Note:** payments are planned to migrate from Stripe to **Netopia** as part
 > of the checkout rebuild (Phase 2 of the platform plan).
 
+## Online orders
+
+An order is saved when it is placed (cash) or when Stripe confirms the payment
+(card). Staff then accept it at `/dashboard/comenzi`. New-order emails go out
+through the queue. While an order stays unaccepted for 5+ minutes,
+`orders:alert-unconfirmed` publishes an urgent ntfy notification every 5 minutes.
+It uses the same topic and title as the Dante app, so the phone's existing
+automation places the call.
+
+Production needs, once, on the server:
+
+1. In `.env`, set `RECAPTCHA_SECRET_KEY` (the secret paired with the widget's
+   site key; with `APP_ENV=production` every order is refused until it is set),
+   `NTFY_TOPIC` (copy it from Dante's shared `.env`), `ORDER_NOTIFICATION_EMAIL`
+   and working `MAIL_*` / `QUEUE_CONNECTION=database`.
+2. The scheduler cron, as the site user:
+
+   ```cron
+   * * * * * cd /home/miki/web/batranul-osu.ro/app && /usr/bin/php8.3 artisan schedule:run >> storage/logs/schedule.log 2>&1
+   ```
+
+3. A queue worker, or the emails stay queued. Hestia disables `pcntl_*` in CLI,
+   so the worker needs the same `PHP_INI_SCAN_DIR` override as Dante's. Install
+   as `/etc/supervisor/conf.d/osu-worker.conf`:
+
+   ```ini
+   [program:osu-worker]
+   environment=PHP_INI_SCAN_DIR="/etc/php/8.3/cli/conf.d:/etc/dante/php-worker"
+   command=/usr/bin/php8.3 /home/miki/web/batranul-osu.ro/app/artisan queue:work --tries=3 --backoff=10 --max-time=3600
+   directory=/home/miki/web/batranul-osu.ro/app
+   user=miki
+   autostart=true
+   autorestart=true
+   startsecs=5
+   stopwaitsecs=120
+   redirect_stderr=true
+   stdout_logfile=/home/miki/web/batranul-osu.ro/app/storage/logs/worker.log
+   ```
+
+Keep `NTFY_TOPIC` empty locally so development never rings the phone.
+
 ## Tests & code style
 
 ```bash

@@ -121,22 +121,29 @@ class ProductTest extends TestCase
 
         $payload = fn (string $id) => [
             'items' => [['product_id' => $id, 'option' => '-', 'quantity' => 1]],
-            'orderData' => ['deliveryType' => 'livrare'],
+            'orderData' => [
+                'name' => 'Ion Popescu',
+                'phone' => '0712345678',
+                'email' => 'ion@example.test',
+                'deliveryType' => 'ridicare',
+            ],
         ];
 
+        $unavailable = ['error' => 'Unul dintre produsele din coș nu mai este disponibil.'];
+
         $this->postJson('/create-checkout-session', $payload((string) $inactive->id))
-            ->assertStatus(422);
+            ->assertStatus(422)->assertExactJson($unavailable);
         $this->postJson('/create-checkout-session', $payload('9999'))
-            ->assertStatus(422);
+            ->assertStatus(422)->assertExactJson($unavailable);
         $this->postJson('/create-checkout-session', $payload('slug-inexistent'))
-            ->assertStatus(422);
+            ->assertStatus(422)->assertExactJson($unavailable);
     }
 
     public function test_checkout_price_selection_uses_muschi_variant_and_diacritics(): void
     {
         $product = $this->makeProduct(['price' => 2290, 'price_with_muschi' => 2790]);
 
-        $controller = new CheckoutController;
+        $controller = app(CheckoutController::class);
         $method = new \ReflectionMethod($controller, 'unitAmountFor');
 
         $this->assertSame(2290, $method->invoke($controller, $product, '-'));

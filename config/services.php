@@ -38,4 +38,18 @@ return [
         'secret' => env('STRIPE_SECRET'),
     ],
 
+    // Push notifications for orders nobody accepts (orders:alert-unconfirmed).
+    // Only the secret lives here; the public site key is in the storefront page.
+    'recaptcha' => [
+        'secret' => env('RECAPTCHA_SECRET_KEY', ''),
+    ],
+
+    // No topic means no alerts. On the public ntfy.sh anyone who knows the
+    // topic can read it; the token is only for a server with access control.
+    'ntfy' => [
+        'url' => env('NTFY_URL', 'https://ntfy.sh'),
+        'topic' => env('NTFY_TOPIC', ''),
+        'token' => env('NTFY_TOKEN', ''),
+    ],
+
 ];

@@ -57,6 +57,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                             Terms Editor
                                         </NavLink>
                                         <NavLink
+                                            href={route("dashboard.orders")}
+                                            active={route().current(
+                                                "dashboard.orders"
+                                            )}
+                                        >
+                                            Comenzi
+                                        </NavLink>
+                                        <NavLink
                                             href={route("dashboard.products")}
                                             active={route().current(
                                                 "dashboard.products"
@@ -201,6 +209,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                     )}
                                 >
                                     Terms Editor
+                                </ResponsiveNavLink>
+                                <ResponsiveNavLink
+                                    href={route("dashboard.orders")}
+                                    active={route().current(
+                                        "dashboard.orders"
+                                    )}
+                                >
+                                    Comenzi
                                 </ResponsiveNavLink>
                                 <ResponsiveNavLink
                                     href={route("dashboard.products")}
