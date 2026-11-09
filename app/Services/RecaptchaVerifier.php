@@ -45,7 +45,8 @@ class RecaptchaVerifier
         }
 
         if ($response->json('success') !== true) {
-            Log::warning('reCAPTCHA token rejected', ['codes' => $response->json('error-codes')]);
+            // error level: production logs nothing below it, and a wrong key refuses every order
+            Log::error('reCAPTCHA token rejected', ['codes' => $response->json('error-codes')]);
 
             return false;
         }

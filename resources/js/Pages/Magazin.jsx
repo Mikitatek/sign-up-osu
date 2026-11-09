@@ -86,6 +86,9 @@ export default function ShopPage() {
 
     const isWorkingHours = isAfterOpening && isBeforeClosing;
 
+    // ultima oră la care se poate programa o livrare (din 30 în 30 de minute)
+    const LAST_SLOT_HOUR = 23;
+
     const workingMessage = !isWorkingHours
         ? currentHour < 10 || (currentHour === 10 && currentMinute < 0)
             ? "Programul de livrări începe la ora 11:00."
@@ -808,20 +811,15 @@ export default function ShopPage() {
     };
 
     function generateTimeOptionsDynamic(selectedDate) {
-        const now = new Date();
+        const slots = generateTimeOptions(10, LAST_SLOT_HOUR, 30);
 
-        // dacă e azi
+        // azi rămân doar orele care n-au trecut
         if (selectedDate === today) {
-            const nextHour = now.getHours() + 2;
-            const startHour = Math.min(Math.max(nextHour, 10), 21);
-            const currentTime = now.toTimeString().slice(0, 5);
-            return generateTimeOptions(startHour, 21, 30).filter(
-                (time) => time > currentTime,
-            );
+            const currentTime = new Date().toTimeString().slice(0, 5);
+            return slots.filter((time) => time > currentTime);
         }
 
-        // altfel default 10-21
-        return generateTimeOptions(10, 21, 30);
+        return slots;
     }
 
     return (
