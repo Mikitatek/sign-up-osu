@@ -82,7 +82,7 @@ export default function ShopPage() {
     const isAfterOpening =
         currentHour > 10 || (currentHour === 11 && currentMinute >= 0);
     const isBeforeClosing =
-        currentHour < 21 || (currentHour === 21 && currentMinute <= 30);
+        currentHour < 23 || (currentHour === 23 && currentMinute <= 15);
 
     const isWorkingHours = isAfterOpening && isBeforeClosing;
 
