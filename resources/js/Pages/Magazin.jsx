@@ -1960,7 +1960,7 @@ export default function ShopPage() {
                                 <ReCAPTCHA
                                     ref={captchaRef}
                                     //live
-                                    sitekey="6LeqX14rAAAAAI4xzmtc7bylyMAbvVwDPJvSBi2l"
+                                    sitekey="6LfYzhguAAAAAG6wVUOX6MYNEnCjqUqKslgrlSdm"
                                     //test
                                     // sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
                                     onChange={setCaptchaToken}
