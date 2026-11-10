@@ -33,10 +33,13 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // staff land in the dashboard; anyone else goes to the storefront
-        $home = $request->user()->is_admin
-            ? route('dashboard', absolute: false)
-            : '/';
+        // admins land in the dashboard, sellers on the orders; anyone else goes to the storefront
+        $user = $request->user();
+        $home = match (true) {
+            (bool) $user->is_admin => route('dashboard', absolute: false),
+            (bool) $user->is_seller => route('dashboard.orders', absolute: false),
+            default => '/',
+        };
 
         return redirect()->intended($home);
     }

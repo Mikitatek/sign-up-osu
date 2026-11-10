@@ -15,7 +15,14 @@ class AdminMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        abort_unless($request->user() && $request->user()->is_admin, 403);
+        $user = $request->user();
+
+        // a seller who opens any other dashboard page is taken to the orders
+        if ($user && ! $user->is_admin && $user->is_seller && $request->isMethod('GET')) {
+            return redirect()->route('dashboard.orders');
+        }
+
+        abort_unless($user && $user->is_admin, 403);
 
         return $next($request);
     }

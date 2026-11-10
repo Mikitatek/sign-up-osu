@@ -97,16 +97,18 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Everything under /dashboard is for staff only — clients never get access.
+// Comenzi online: admins and sellers. Sellers see nothing else in /dashboard.
+Route::middleware(['auth', 'verified', 'staff'])->group(function () {
+    Route::get('/dashboard/comenzi', [OrderController::class, 'index'])->name('dashboard.orders');
+    Route::post('/dashboard/comenzi/{order}/advance', [OrderController::class, 'advance'])->name('dashboard.orders.advance');
+    Route::post('/dashboard/comenzi/{order}/cancel', [OrderController::class, 'cancel'])->name('dashboard.orders.cancel');
+});
+
+// Everything else under /dashboard is for admins only — clients never get access.
 Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard');
     })->name('dashboard');
-
-    // Comenzi online
-    Route::get('/dashboard/comenzi', [OrderController::class, 'index'])->name('dashboard.orders');
-    Route::post('/dashboard/comenzi/{order}/advance', [OrderController::class, 'advance'])->name('dashboard.orders.advance');
-    Route::post('/dashboard/comenzi/{order}/cancel', [OrderController::class, 'cancel'])->name('dashboard.orders.cancel');
 
     // Newsletter
     Route::get('/dashboard/newsletter', [NewsletterController::class, 'index'])->name('dashboard.newsletter');

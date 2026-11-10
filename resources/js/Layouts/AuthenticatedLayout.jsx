@@ -84,6 +84,16 @@ export default function AuthenticatedLayout({ header, children }) {
                                         </NavLink>
                                     </>
                                 )}
+                                {!user.is_admin && user.is_seller && (
+                                    <NavLink
+                                        href={route("dashboard.orders")}
+                                        active={route().current(
+                                            "dashboard.orders"
+                                        )}
+                                    >
+                                        Comenzi
+                                    </NavLink>
+                                )}
                             </div>
                         </div>
 
@@ -235,6 +245,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                     Rapoarte JE
                                 </ResponsiveNavLink>
                             </>
+                        )}
+                        {!user.is_admin && user.is_seller && (
+                            <ResponsiveNavLink
+                                href={route("dashboard.orders")}
+                                active={route().current("dashboard.orders")}
+                            >
+                                Comenzi
+                            </ResponsiveNavLink>
                         )}
                     </div>
 

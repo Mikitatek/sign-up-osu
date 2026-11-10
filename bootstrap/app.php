@@ -3,6 +3,7 @@
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\StaffMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Translation\TranslationServiceProvider;
 
@@ -15,6 +16,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function ($middleware) {
         $middleware->alias([
             'admin' => AdminMiddleware::class,
+            'staff' => StaffMiddleware::class,
         ]);
         $middleware->web(append: [
             HandleInertiaRequests::class,
