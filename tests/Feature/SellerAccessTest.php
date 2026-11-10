@@ -101,6 +101,20 @@ class SellerAccessTest extends TestCase
         Notification::assertSentTo($user, ResetPassword::class);
     }
 
+    public function test_the_password_email_is_in_romanian(): void
+    {
+        $user = User::factory()->create(['name' => 'Maria Pop']);
+
+        $mail = (new ResetPassword('token-123'))->toMail($user);
+        $html = (string) $mail->render();
+
+        $this->assertSame('Setează-ți parola · Bătrânul Osu', $mail->subject);
+        $this->assertStringContainsString('Bună, Maria Pop!', $html);
+        $this->assertStringContainsString('expiră în 60 de minute', $html);
+        $this->assertStringContainsString(e(route('password.reset', ['token' => 'token-123', 'email' => $user->email])), $html);
+        $this->assertStringNotContainsString('Reset Password', $html);
+    }
+
     public function test_a_new_seller_needs_a_name(): void
     {
         $this->artisan('users:seller', ['email' => 'maria@osu.test'])->assertFailed();
