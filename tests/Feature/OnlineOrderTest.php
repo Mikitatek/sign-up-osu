@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\OrderStatus;
 use App\Http\Controllers\CheckoutController;
+use App\Mail\CustomerOrderCancelledMail;
 use App\Mail\CustomerOrderConfirmationMail;
 use App\Mail\RestaurantOrderPlacedMail;
 use App\Models\Order;
@@ -21,10 +22,13 @@ class OnlineOrderTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @var list<array{method: string, url: string, params: array}> */
+    /** @var list<array{method: string, url: string, params: array, headers: array}> */
     private array $stripeRequests = [];
 
-    private array $stripeResponse = [];
+    /** A fixed body, or a closure from the request URL to one. */
+    private array|\Closure $stripeResponse = [];
+
+    public int $stripeStatus = 200;
 
     protected function setUp(): void
     {
@@ -44,7 +48,9 @@ class OnlineOrderTest extends TestCase
 
             public function request($method, $absUrl, $headers, $params, $hasFile, $apiMode = 'v1', $maxNetworkRetries = null)
             {
-                return [json_encode($this->test->recordStripeRequest($method, $absUrl, $params)), 200, []];
+                $body = $this->test->recordStripeRequest($method, $absUrl, $params, $headers);
+
+                return [json_encode($body), $this->test->stripeStatus, []];
             }
         });
     }
@@ -56,11 +62,13 @@ class OnlineOrderTest extends TestCase
         parent::tearDown();
     }
 
-    public function recordStripeRequest(string $method, string $url, array $params): array
+    public function recordStripeRequest(string $method, string $url, array $params, array $headers = []): array
     {
-        $this->stripeRequests[] = compact('method', 'url', 'params');
+        $this->stripeRequests[] = compact('method', 'url', 'params', 'headers');
 
-        return $this->stripeResponse;
+        return $this->stripeResponse instanceof \Closure
+            ? ($this->stripeResponse)($url)
+            : $this->stripeResponse;
     }
 
     private function product(array $attrs = []): Product
@@ -414,17 +422,18 @@ class OnlineOrderTest extends TestCase
                 ->component('Dashboard/Orders', false)
                 ->has('waiting', 1)
                 ->where('waiting.0.number', $waiting->fresh()->number)
-                ->has('accepted', 0));
+                ->where('waiting.0.next_action', 'Acceptă')
+                ->where('waiting.0.can_cancel', true)
+                ->has('active', 0)
+                ->has('finished', 0));
     }
 
     public function test_accepting_stops_the_order_waiting_and_records_who_did_it(): void
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = $this->admin();
         $order = $this->placedOrder();
 
-        $this->actingAs($admin)
-            ->post(route('dashboard.orders.accept', $order))
-            ->assertRedirect();
+        $this->advance($admin, $order, OrderStatus::Placed)->assertRedirect();
 
         $order->refresh();
         $this->assertSame(OrderStatus::Accepted, $order->status);
@@ -434,24 +443,190 @@ class OnlineOrderTest extends TestCase
 
     public function test_an_unpaid_card_order_cannot_be_accepted(): void
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = $this->admin();
         $order = $this->placedOrder();
         $order->update(['status' => OrderStatus::PendingPayment]);
 
-        $this->actingAs($admin)->post(route('dashboard.orders.accept', $order));
+        $this->advance($admin, $order, OrderStatus::PendingPayment);
+        $this->advance($admin, $order, OrderStatus::Placed);
 
         $this->assertSame(OrderStatus::PendingPayment, $order->fresh()->status);
     }
 
-    public function test_only_staff_can_see_or_accept_orders(): void
+    public function test_only_staff_can_see_or_change_orders(): void
     {
         $customer = User::factory()->create(['is_admin' => false]);
         $order = $this->placedOrder();
+        $accept = ['from' => OrderStatus::Placed->value];
+        $decline = ['reason' => 'test'];
 
         $this->get(route('dashboard.orders'))->assertRedirect(route('login'));
-        $this->post(route('dashboard.orders.accept', $order))->assertRedirect(route('login'));
-        $this->actingAs($customer)->post(route('dashboard.orders.accept', $order))->assertForbidden();
+        $this->post(route('dashboard.orders.advance', $order), $accept)->assertRedirect(route('login'));
+        $this->post(route('dashboard.orders.cancel', $order), $decline)->assertRedirect(route('login'));
+        $this->actingAs($customer)->post(route('dashboard.orders.advance', $order), $accept)->assertForbidden();
+        $this->actingAs($customer)->post(route('dashboard.orders.cancel', $order), $decline)->assertForbidden();
 
         $this->assertSame(OrderStatus::Placed, $order->fresh()->status);
+    }
+
+    public function test_a_delivery_order_goes_through_every_step_to_delivered(): void
+    {
+        $admin = $this->admin();
+        $order = $this->placedOrder();
+        $order->update(['delivery_type' => 'livrare', 'street' => 'Str. Lungă 1', 'city' => 'Brașov']);
+
+        $steps = [
+            OrderStatus::Placed, OrderStatus::Accepted, OrderStatus::Preparing,
+            OrderStatus::Ready, OrderStatus::OutForDelivery,
+        ];
+        foreach ($steps as $from) {
+            $this->advance($admin, $order, $from)->assertRedirect();
+        }
+
+        $order->refresh();
+        $this->assertSame(OrderStatus::Completed, $order->status);
+        $this->assertSame('Livrată', $order->statusLabel());
+        foreach (['accepted_at', 'preparing_at', 'ready_at', 'out_for_delivery_at', 'completed_at'] as $column) {
+            $this->assertNotNull($order->{$column}, $column);
+        }
+        $this->assertFalse($order->isCancellable());
+    }
+
+    public function test_a_pickup_order_is_handed_over_straight_from_ready(): void
+    {
+        $admin = $this->admin();
+        $order = $this->placedOrder();
+
+        foreach ([OrderStatus::Placed, OrderStatus::Accepted, OrderStatus::Preparing] as $from) {
+            $this->advance($admin, $order, $from);
+        }
+        $this->assertSame('Marchează ridicată', $order->fresh()->nextActionLabel());
+
+        $this->advance($admin, $order, OrderStatus::Ready);
+
+        $order->refresh();
+        $this->assertSame(OrderStatus::Completed, $order->status);
+        $this->assertSame('Ridicată', $order->statusLabel());
+        $this->assertNull($order->out_for_delivery_at);
+    }
+
+    public function test_a_double_click_moves_the_order_only_one_step(): void
+    {
+        $admin = $this->admin();
+        $order = $this->placedOrder();
+
+        $this->advance($admin, $order, OrderStatus::Placed);
+        $this->advance($admin, $order, OrderStatus::Placed);
+
+        $this->assertSame(OrderStatus::Accepted, $order->fresh()->status);
+    }
+
+    public function test_declining_tells_the_customer_why_and_ends_the_alerts(): void
+    {
+        $admin = $this->admin();
+        $order = $this->placedOrder();
+
+        $this->actingAs($admin)
+            ->post(route('dashboard.orders.cancel', $order), ['reason' => 'Nu mai avem aluat azi.'])
+            ->assertRedirect();
+
+        $order->refresh();
+        $this->assertSame(OrderStatus::Cancelled, $order->status);
+        $this->assertSame('Nu mai avem aluat azi.', $order->cancellation_reason);
+        $this->assertSame($admin->id, $order->cancelled_by);
+        $this->assertNotNull($order->cancelled_at);
+        $this->assertNull($order->refunded_at);
+        $this->assertSame([], $this->stripeRequests);
+        Mail::assertQueued(CustomerOrderCancelledMail::class, fn ($mail) => $mail->hasTo('ion@example.test'));
+
+        (new CustomerOrderCancelledMail($order))
+            ->assertSeeInHtml('Nu mai avem aluat azi.')
+            ->assertDontSeeInHtml('Am returnat');
+    }
+
+    public function test_cancelling_needs_a_reason(): void
+    {
+        $order = $this->placedOrder();
+
+        $this->actingAs($this->admin())
+            ->post(route('dashboard.orders.cancel', $order), ['reason' => ' '])
+            ->assertSessionHasErrors('reason');
+
+        $this->assertSame(OrderStatus::Placed, $order->fresh()->status);
+        Mail::assertNothingQueued();
+    }
+
+    public function test_cancelling_a_paid_card_order_refunds_it_once(): void
+    {
+        $order = $this->paidCardOrder();
+        $this->stripeResponse = fn (string $url) => str_contains($url, '/v1/refunds')
+            ? ['id' => 're_1', 'object' => 'refund', 'status' => 'succeeded']
+            : ['id' => 'cs_test_9', 'object' => 'checkout.session', 'payment_intent' => 'pi_9'];
+        $admin = $this->admin();
+
+        $this->actingAs($admin)->post(route('dashboard.orders.cancel', $order), ['reason' => 'Închidem mai devreme.']);
+        $this->actingAs($admin)->post(route('dashboard.orders.cancel', $order), ['reason' => 'Al doilea click.']);
+
+        $order->refresh();
+        $this->assertSame(OrderStatus::Cancelled, $order->status);
+        $this->assertSame('Închidem mai devreme.', $order->cancellation_reason);
+        $this->assertNotNull($order->refunded_at);
+
+        $refunds = array_values(array_filter($this->stripeRequests, fn ($r) => str_contains($r['url'], '/v1/refunds')));
+        $this->assertCount(1, $refunds);
+        $this->assertSame('pi_9', $refunds[0]['params']['payment_intent']);
+        $this->assertContains("Idempotency-Key: osu-order-{$order->id}-refund", $refunds[0]['headers']);
+
+        Mail::assertQueuedCount(1);
+        (new CustomerOrderCancelledMail($order))->assertSeeInHtml('Am returnat 25,00 RON');
+    }
+
+    public function test_a_failed_refund_leaves_the_order_as_it_was(): void
+    {
+        $order = $this->paidCardOrder();
+        $this->stripeStatus = 400;
+        $this->stripeResponse = ['error' => ['type' => 'invalid_request_error', 'message' => 'No such payment']];
+
+        $this->actingAs($this->admin())
+            ->post(route('dashboard.orders.cancel', $order), ['reason' => 'Închidem mai devreme.'])
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $order->refresh();
+        $this->assertSame(OrderStatus::Placed, $order->status);
+        $this->assertNull($order->refunded_at);
+        $this->assertNull($order->cancellation_reason);
+        Mail::assertNothingQueued();
+    }
+
+    public function test_a_finished_order_can_no_longer_be_cancelled(): void
+    {
+        $order = $this->placedOrder();
+        $order->update(['status' => OrderStatus::Completed, 'completed_at' => now()]);
+
+        $this->actingAs($this->admin())
+            ->post(route('dashboard.orders.cancel', $order), ['reason' => 'Prea târziu.']);
+
+        $this->assertSame(OrderStatus::Completed, $order->fresh()->status);
+        Mail::assertNothingQueued();
+    }
+
+    private function admin(): User
+    {
+        return User::factory()->create(['is_admin' => true]);
+    }
+
+    private function advance(User $admin, Order $order, OrderStatus $from)
+    {
+        return $this->actingAs($admin)
+            ->post(route('dashboard.orders.advance', $order), ['from' => $from->value]);
+    }
+
+    private function paidCardOrder(): Order
+    {
+        $order = $this->placedOrder();
+        $order->update(['payment_method' => 'card', 'stripe_session_id' => 'cs_test_9']);
+
+        return $order;
     }
 }

@@ -105,7 +105,8 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 
     // Comenzi online
     Route::get('/dashboard/comenzi', [OrderController::class, 'index'])->name('dashboard.orders');
-    Route::post('/dashboard/comenzi/{order}/accept', [OrderController::class, 'accept'])->name('dashboard.orders.accept');
+    Route::post('/dashboard/comenzi/{order}/advance', [OrderController::class, 'advance'])->name('dashboard.orders.advance');
+    Route::post('/dashboard/comenzi/{order}/cancel', [OrderController::class, 'cancel'])->name('dashboard.orders.cancel');
 
     // Newsletter
     Route::get('/dashboard/newsletter', [NewsletterController::class, 'index'])->name('dashboard.newsletter');
